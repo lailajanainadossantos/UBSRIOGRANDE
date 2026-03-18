@@ -517,15 +517,20 @@ textarea { resize: vertical; min-height: 60px; }
 .btn-sel-tri:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
 .btn-sel-tri.all-on { background: var(--navy); color: #fff; border-color: var(--navy); }
 @media print {
-  /* Esconde tudo exceto a folha — regra primária */
+  /* Esconde tudo exceto a folha */
   body > *:not(#print-root){display:none !important;}
   #print-root{display:block !important;}
+  /* Reset */
   *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;color-adjust:exact !important;}
 }
-@page{size:A4 portrait;margin:0;}
-@page landscape{size:A4 landscape;margin:0;}
-</style>
-<link rel="stylesheet" media="print" href="./print.css"/>
+@page{
+  size: A4 portrait;
+  margin: 0;
+}
+@page landscape{
+  size: A4 landscape;
+  margin: 0;
+}
 /* Estrutura da folha impressa */
 .folha-print{
   width: 210mm;
@@ -627,6 +632,7 @@ textarea { resize: vertical; min-height: 60px; }
 .p-rapidosbody{padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:4px;}
 .p-rapido-item{display:flex;align-items:center;gap:8px;font-size:11px;line-height:1.4;}
 </style>
+<link rel="stylesheet" media="print" href="./print.css"/>
 </head>
 <body>
 <div id="print-root" style="display:none;"></div>
@@ -1092,6 +1098,7 @@ textarea { resize: vertical; min-height: 60px; }
           <option value="wells-tvp">Wells &mdash; TVP</option>
           <option value="wells-tep">Wells &mdash; TEP</option>
           <option value="cha2ds2">CHA&#8322;DS&#8322;-VASc</option>
+          <option value="ferro">Sulfato Ferroso &mdash; Pediatria</option>
         </select>
       </div>
 
@@ -1189,6 +1196,36 @@ textarea { resize: vertical; min-height: 60px; }
         <label class="cbi" id="cha-age65-lbl"><input type="checkbox" id="cha-age65" data-cv="1" onchange="calcCHAidade(65)"> Idade 65&ndash;74 anos (+1)</label>
         <label class="cbi"><input type="checkbox" data-cv="1" onchange="calcCHA()"> Sexo feminino (+1)</label>
         <button class="btn-cfg" style="margin-top:6px;width:100%" onclick="calcLimpar('cha2ds2')">&#8635; Limpar</button>
+      </div>
+
+      <!-- SULFATO FERROSO PEDIATRIA -->
+      <div id="calc-ferro" style="display:none">
+        <div class="trisec">Sulfato Ferroso &mdash; Pediatria</div>
+        <div style="font-size:10px;color:#64748b;margin-bottom:8px;line-height:1.5;">
+          Solução oral 25 mg/mL de Fe elementar (Aditil&reg; gotas).<br>
+          Resultado em tempo real.
+        </div>
+        <div class="row">
+          <label>Peso (kg)</label>
+          <input id="ferro-peso" type="number" step="0.1" min="0.5" max="60" placeholder="Ex: 12,5" oninput="calcFerro()"/>
+        </div>
+        <div class="row">
+          <label>Idade</label>
+          <select id="ferro-idade" onchange="calcFerro()">
+            <option value="">— selecione —</option>
+            <option value="prematuro">Prematuro / RN de baixo peso</option>
+            <option value="0a12">0 a 12 meses (lactente)</option>
+            <option value="1a5">1 a 5 anos</option>
+            <option value="6a12">6 a 12 anos (adolescente precoce)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label>Indica&ccedil;&atilde;o</label>
+          <select id="ferro-ind" onchange="calcFerro()">
+            <option value="tratamento">Tratamento de anemia ferropriva</option>
+            <option value="profilaxia">Profilaxia / suplementa&ccedil;&atilde;o</option>
+          </select>
+        </div>
       </div>
 
       <div id="calc-btn-area" style="display:none;margin-top:4px">
@@ -2896,7 +2933,7 @@ function cbImprimirExames(){
 
 function calcMostrar(){
   var sel=document.getElementById('calc-sel').value;
-  ['ldl','ig','ckd','dengue','prevent','wells-tvp','wells-tep','cha2ds2'].forEach(function(id){
+  ['ldl','ig','ckd','dengue','prevent','wells-tvp','wells-tep','cha2ds2','ferro'].forEach(function(id){
     document.getElementById('calc-'+id).style.display=id===sel?'block':'none';
   });
   var btnArea=document.getElementById('calc-btn-area');
@@ -2919,6 +2956,7 @@ function calcRenderResultado(sel){
   else if(sel==='wells-tvp') calcWellsTVP();
   else if(sel==='wells-tep') calcWellsTEP();
   else if(sel==='cha2ds2')   calcCHA();
+  else if(sel==='ferro')     calcFerro();
 }
 
 // ── A) LDL Martin/Hopkins ─────────────────────────────────────
@@ -3226,9 +3264,12 @@ function calcLimpar(id){
   var panel = document.getElementById('calc-'+id);
   if(!panel) return;
   panel.querySelectorAll('input[type=checkbox]').forEach(function(cb){ cb.checked=false; });
+  panel.querySelectorAll('input[type=number]').forEach(function(i){ i.value=''; });
+  panel.querySelectorAll('select').forEach(function(s){ s.selectedIndex=0; });
   if(id==='wells-tvp') calcWellsTVP();
   else if(id==='wells-tep') calcWellsTEP();
   else if(id==='cha2ds2') calcCHA();
+  else if(id==='ferro') calcFerro();
 }
 
 // ── Utilitário: card de resultado reutilizável ────────────────────
@@ -3410,6 +3451,160 @@ function calcCHA(){
     linhas,
     rodape
   );
+}
+
+// ── I) Sulfato Ferroso Pediátrico ─────────────────────────────────
+// Referências: SBP (2021), OMS, MS/PNDS
+// Solução: Sulfato Ferroso 25 mg Fe elementar / mL (Aditil® gotas)
+// 1 gota ≈ 1,25 mg Fe elementar (frasco conta-gotas padrão: 20 gotas/mL)
+// Doses conforme faixa etária e indicação (tratamento vs profilaxia)
+
+var FERRO_REGRAS = {
+  // [dose_mg_kg_dia_trat, dose_mg_kg_dia_prof, dose_max_trat, dose_max_prof, obs]
+  prematuro: {
+    trat: 3, prof: 2, maxT: null, maxP: null,
+    obsT: 'Tratamento: 3 mg/kg/dia de Fe elem. — iniciar após 4–6 sem de vida',
+    obsP: 'Profilaxia: 2 mg/kg/dia de Fe elem. — iniciar com 30 dias de vida'
+  },
+  '0a12': {
+    trat: 3, prof: 1, maxT: null, maxP: null,
+    obsT: 'Tratamento: 3–5 mg/kg/dia (usar 3 mg/kg para cálculo conservador)',
+    obsP: 'Profilaxia: 1 mg/kg/dia — lactentes a termo em aleitamento exclusivo'
+  },
+  '1a5': {
+    trat: 3, prof: 1, maxT: 60, maxP: 30,
+    obsT: 'Tratamento: 3–5 mg/kg/dia (máx 60 mg/dia)',
+    obsP: 'Profilaxia: 1 mg/kg/dia (máx 30 mg/dia)'
+  },
+  '6a12': {
+    trat: 3, prof: 1, maxT: 60, maxP: 30,
+    obsT: 'Tratamento: 3 mg/kg/dia (máx 60 mg/dia)',
+    obsP: 'Profilaxia: 1 mg/kg/dia (máx 30 mg/dia)'
+  }
+};
+
+function calcFerro(){
+  var el     = document.getElementById('calc-resultado');
+  var peso   = parseFloat(document.getElementById('ferro-peso').value);
+  var faixa  = document.getElementById('ferro-idade').value;
+  var ind    = document.getElementById('ferro-ind').value;
+
+  if(!faixa || !ind){
+    el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:13px;">'
+      +'Preencha o peso, a faixa et\u00e1ria e a indica\u00e7\u00e3o.</div>';
+    return;
+  }
+  if(isNaN(peso)||peso<=0){
+    el.innerHTML='<div style="padding:30px;text-align:center;color:#94a3b8;font-size:13px;">'
+      +'Informe o peso da crian\u00e7a.</div>';
+    return;
+  }
+
+  var reg   = FERRO_REGRAS[faixa];
+  var ehTrat = ind==='tratamento';
+  var doseMgKg = ehTrat ? reg.trat : reg.prof;
+  var doseMax  = ehTrat ? reg.maxT : reg.maxP;
+  var obs      = ehTrat ? reg.obsT : reg.obsP;
+
+  // mg/dia de Fe elementar
+  var mgDia = Math.round(peso * doseMgKg * 10)/10;
+  if(doseMax && mgDia > doseMax) mgDia = doseMax;
+
+  // mL/dia (25 mg Fe/mL)
+  var mlDia  = Math.round(mgDia / 25 * 100)/100;
+  // Gotas/dia (20 gotas = 1 mL → 1 gota ≈ 1,25 mg Fe)
+  var gtsDia = Math.round(mlDia * 20);
+
+  // Divisão por tomadas (1x ao dia preferencial, 2x para doses > 30 mg)
+  var tomadas, gtsTomada, mlTomada, msgTomada;
+  if(mgDia > 30 && ehTrat){
+    tomadas   = 2;
+    gtsTomada = Math.round(gtsDia/2);
+    mlTomada  = Math.round(mlDia/2*100)/100;
+    msgTomada = '2\u00d7 ao dia (dividido em 2 tomadas iguais)';
+  } else {
+    tomadas   = 1;
+    gtsTomada = gtsDia;
+    mlTomada  = mlDia;
+    msgTomada = '1\u00d7 ao dia';
+  }
+
+  // Texto de prescrição copiável
+  var nomeFaixa = {prematuro:'Prematuro/RN baixo peso','0a12':'0–12 meses','1a5':'1–5 anos','6a12':'6–12 anos'}[faixa];
+  var nomeDose  = doseMgKg+' mg/kg/dia de Fe elementar';
+  var prescTxt  =
+    'Sulfato Ferroso 25 mg/mL (Fe elementar) — gotas\n'
+    +'Peso: '+peso+' kg | Faixa: '+nomeFaixa+'\n'
+    +'Indicação: '+(ehTrat?'Tratamento de anemia ferropriva':'Profilaxia/suplementação')+'\n\n'
+    +'Dose: '+doseMgKg+' mg/kg/dia = '+mgDia+' mg Fe/dia\n'
+    +'Volume: '+mlDia+' mL/dia = '+gtsDia+' gotas/dia\n'
+    +'Administração: '+msgTomada+'\n'
+    +(tomadas===2?'→ '+gtsTomada+' gotas pela manhã + '+gtsTomada+' gotas à noite\n':'→ '+gtsDia+' gotas 1× ao dia\n')
+    +'\nAdministrar longe das refeições (30 min antes ou 2h após).\n'
+    +'Pode-se misturar com suco de laranja para melhorar absorção.\n'
+    +'Repetir hemograma após 30–60 dias de tratamento.';
+
+  el.innerHTML =
+    '<div style="padding:20px 24px;">'
+    +'<div style="font-size:11px;font-weight:700;color:#1a3a5c;text-transform:uppercase;'
+    +'letter-spacing:.08em;margin-bottom:4px;border-bottom:2px solid #1a3a5c;padding-bottom:7px;">'
+    +'Sulfato Ferroso &mdash; Pediatria</div>'
+    +'<div style="font-size:10px;color:#64748b;margin-bottom:14px;">'
+    +'Solu\u00e7\u00e3o 25 mg/mL de Fe elementar (Aditil\u00ae gotas) &middot; '+(ehTrat?'Tratamento':'Profilaxia')
+    +' &middot; '+nomeFaixa+'</div>'
+
+    // Cards principais
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">'
+
+    // mg/dia
+    +'<div style="background:linear-gradient(135deg,#1a3a5c,#1e5080);border-radius:10px;padding:14px;text-align:center;">'
+    +'<div style="font-size:8.5px;color:#93c5fd;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Fe elementar</div>'
+    +'<div style="font-size:28px;font-weight:800;color:#fff;line-height:1;">'+mgDia+'</div>'
+    +'<div style="font-size:9px;color:#93c5fd;margin-top:3px;">mg/dia</div>'
+    +'</div>'
+
+    // mL/dia
+    +'<div style="background:#0f766e;border-radius:10px;padding:14px;text-align:center;">'
+    +'<div style="font-size:8.5px;color:#99f6e4;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Volume</div>'
+    +'<div style="font-size:28px;font-weight:800;color:#fff;line-height:1;">'+mlDia+'</div>'
+    +'<div style="font-size:9px;color:#99f6e4;margin-top:3px;">mL/dia</div>'
+    +'</div>'
+
+    // gotas/dia
+    +'<div style="background:#1e40af;border-radius:10px;padding:14px;text-align:center;">'
+    +'<div style="font-size:8.5px;color:#bfdbfe;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Gotas</div>'
+    +'<div style="font-size:28px;font-weight:800;color:#fff;line-height:1;">'+gtsDia+'</div>'
+    +'<div style="font-size:9px;color:#bfdbfe;margin-top:3px;">gotas/dia</div>'
+    +'</div></div>'
+
+    // Administração
+    +'<div style="background:#f0f9ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-bottom:12px;">'
+    +'<div style="font-size:9px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Administra\u00e7\u00e3o</div>'
+    +'<div style="font-size:11.5px;color:#1e293b;line-height:1.7;">'
+    +(tomadas===2
+      ? '<b>'+gtsTomada+' gotas</b> pela manh\u00e3 + <b>'+gtsTomada+' gotas</b> \u00e0 noite'
+      : '<b>'+gtsDia+' gotas</b> uma vez ao dia')
+    +'<br><span style="font-size:10px;color:#64748b;">'
+    +'(= <b>'+mlTomada+' mL</b> por tomada &middot; '+msgTomada+')'
+    +'</span></div></div>'
+
+    // Detalhes
+    +'<div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:10px;color:#475569;line-height:1.7;margin-bottom:12px;">'
+    +'<b>C\u00e1lculo:</b> '+peso+' kg \u00d7 '+doseMgKg+' mg/kg/dia = '+mgDia+' mg Fe/dia<br>'
+    +'<b>Convers\u00e3o:</b> '+mgDia+' mg \u00f7 25 mg/mL = '+mlDia+' mL &middot; '
+    +'1 mL = 20 gotas \u2192 '+gtsDia+' gotas/dia<br>'
+    +'<b>Refer\u00eancia:</b> '+obs
+    +'</div>'
+
+    // Texto copiável
+    +'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;'
+    +'font-size:10.5px;color:#166534;line-height:1.8;white-space:pre-wrap;font-family:monospace;">'
+    +prescTxt+'</div>'
+    +'<div style="margin-top:10px;">'
+    +'<button onclick="navigator.clipboard.writeText('+JSON.stringify(prescTxt)+')" '
+    +'style="padding:7px 14px;background:#1a3a5c;color:#fff;border:none;border-radius:7px;'
+    +'cursor:pointer;font-size:11px;font-weight:600;">&#128203; Copiar orienta\u00e7\u00e3o</button>'
+    +'</div></div>';
 }
 
 function calcImprimir(){
