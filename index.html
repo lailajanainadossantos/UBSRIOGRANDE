@@ -5,9 +5,8 @@
 <title>UBS Rio Grande &mdash; Gerador de Documentos</title>
 <style>
 /* ============================================================
-   TELA — redesign completo
-   Layout: sidebar fixa 320px + área de documento ocupando
-   todo o restante. Documento centralizado como folha A4.
+   TELA — Refatoração v12 — Sidebar hierárquica premium
+   Layout: sidebar fixa 300px + área principal
    ============================================================ */
 
 /* --- Reset & base --- */
@@ -15,22 +14,30 @@
 :root {
   --navy:    #1a3a5c;
   --navy2:   #1e5080;
+  --navy3:   #0f2740;
   --blue:    #3b82f6;
   --blue-lt: #eff6ff;
   --blue-bd: #bfdbfe;
+  --teal:    #0d9488;
+  --emerald: #059669;
+  --amber:   #d97706;
+  --rose:    #e11d48;
   --slate:   #475569;
   --slate2:  #64748b;
   --muted:   #94a3b8;
   --border:  #e2e8f0;
-  --bg:      #f1f5f9;
+  --bg:      #f0f4f8;
   --surface: #f8fafc;
   --white:   #ffffff;
   --text:    #0f172a;
   --text2:   #1e293b;
   --danger:  #ef4444;
-  --sidebar: 320px;
+  --sidebar: 300px;
   --radius:  10px;
+  --radius-sm: 7px;
   --shadow:  0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.07);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,.12);
+  --transition: .18s ease;
 }
 html { font-size: 14px; }
 body {
@@ -40,99 +47,275 @@ body {
   min-height: 100vh;
 }
 
-/* --- Layout raiz: sidebar + main --- */
-.app {
-  display: flex;
-  min-height: 100vh;
-}
+/* --- Layout raiz --- */
+.app { display: flex; min-height: 100vh; }
 
-/* ============ SIDEBAR ============ */
+/* ============================================================
+   NOVA SIDEBAR HIERÁRQUICA
+   ============================================================ */
 .painel {
   width: var(--sidebar);
   flex-shrink: 0;
-  background: var(--white);
-  border-right: 1px solid var(--border);
+  background: var(--navy3);
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: hidden;
-  box-shadow: 2px 0 12px rgba(0,0,0,.05);
-  z-index: 10;
+  z-index: 20;
+  box-shadow: 3px 0 16px rgba(0,0,0,.2);
 }
 
-/* Cabeçalho da sidebar */
+/* Header da sidebar */
 .phd {
-  background: linear-gradient(160deg, var(--navy) 0%, var(--navy2) 100%);
-  color: #fff;
-  padding: 18px 20px 14px;
+  padding: 16px 18px 14px;
   flex-shrink: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: linear-gradient(160deg, rgba(255,255,255,.06) 0%, transparent 100%);
 }
 .phd .ps {
-  font-size: 10px;
-  color: #93c5fd;
-  letter-spacing: .08em;
+  font-size: 9px;
+  color: #60a5fa;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  font-weight: 500;
-  margin-bottom: 3px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
+.phd .ps::before { content:''; width:6px;height:6px;background:#22c55e;border-radius:50%;flex-shrink:0; }
 .phd .pt {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
+  color: #fff;
   letter-spacing: -.01em;
 }
 
-/* Tabs de navegação */
-.tabs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  border-bottom: 1px solid var(--border);
+/* Campos de paciente no topo da sidebar */
+.sb-pac {
+  padding: 12px 14px;
   flex-shrink: 0;
-  background: var(--surface);
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.07);
 }
-.tab {
-  padding: 8px 4px;
+.sb-pac label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #93c5fd;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  display: block;
+  margin-bottom: 3px;
+}
+.sb-pac input, .sb-pac select {
+  width: 100%;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #fff;
+  font-size: 11.5px;
+  font-family: inherit;
+  outline: none;
+  margin-bottom: 8px;
+  transition: border-color var(--transition), background var(--transition);
+}
+.sb-pac input::placeholder { color: rgba(255,255,255,.35); }
+.sb-pac input:focus, .sb-pac select:focus {
+  border-color: #60a5fa;
+  background: rgba(255,255,255,.15);
+}
+.sb-pac input:last-child, .sb-pac select:last-child { margin-bottom: 0; }
+.sb-pac select option { background: #1e3a5c; color: #fff; }
+
+/* Área de navegação scrollável */
+.sb-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.15) transparent;
+}
+.sb-nav::-webkit-scrollbar { width: 3px; }
+.sb-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 4px; }
+
+/* Seções da nav */
+.nav-section {
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+.nav-section-label {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,.3);
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  padding: 8px 8px 4px;
+  display: block;
+}
+
+/* Botão de nav simples */
+.nav-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
   border: none;
   background: none;
+  color: rgba(255,255,255,.65);
   cursor: pointer;
-  font-size: 9.5px;
-  font-weight: 600;
-  color: var(--muted);
-  border-bottom: 2px solid transparent;
-  text-align: center;
-  transition: color .15s, border-color .15s, background .15s;
-  letter-spacing: .02em;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 7px;
+  transition: background var(--transition), color var(--transition);
+  text-align: left;
+  line-height: 1.3;
+  margin-bottom: 1px;
 }
-.tab:hover { color: var(--navy); background: var(--blue-lt); }
-.tab.on {
-  color: var(--navy);
-  border-bottom-color: var(--navy);
-  background: var(--white);
+.nav-btn:hover {
+  background: rgba(255,255,255,.09);
+  color: #fff;
+}
+.nav-btn.active {
+  background: rgba(59,130,246,.25);
+  color: #93c5fd;
   font-weight: 700;
 }
-
-/* Área de formulário com scroll */
-.fb {
-  padding: 16px;
-  overflow-y: auto;
-  flex: 1;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+.nav-btn.active .nav-icon { color: #60a5fa; }
+.nav-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  width: 18px;
+  text-align: center;
+  color: rgba(255,255,255,.4);
+  transition: color var(--transition);
 }
-.fb::-webkit-scrollbar { width: 4px; }
-.fb::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.nav-btn:hover .nav-icon { color: rgba(255,255,255,.8); }
 
-/* --- Campos de formulário --- */
-label {
+/* Acordeão de submenus */
+.nav-group { margin-bottom: 2px; }
+.nav-group-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: none;
+  background: none;
+  color: rgba(255,255,255,.65);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: 7px;
+  transition: background var(--transition), color var(--transition);
+  text-align: left;
+}
+.nav-group-toggle:hover { background: rgba(255,255,255,.08); color: #fff; }
+.nav-group-toggle.open { color: #fff; background: rgba(255,255,255,.07); }
+.nav-group-arrow {
+  margin-left: auto;
+  font-size: 10px;
+  color: rgba(255,255,255,.35);
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+.nav-group-toggle.open .nav-group-arrow { transform: rotate(90deg); color: rgba(255,255,255,.6); }
+.nav-sub {
+  display: none;
+  padding: 2px 0 2px 20px;
+  border-left: 1.5px solid rgba(255,255,255,.1);
+  margin-left: 19px;
+}
+.nav-sub.open { display: block; }
+.nav-sub .nav-btn {
   font-size: 11px;
+  padding: 6px 10px;
+  color: rgba(255,255,255,.5);
+}
+.nav-sub .nav-btn:hover { color: rgba(255,255,255,.9); }
+.nav-sub .nav-btn.active { color: #93c5fd; }
+
+/* Badge colorido por domínio */
+.nav-badge {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1.5px 5px;
+  border-radius: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.nb-prenatal { background: #be185d; color: #fce7f3; }
+.nb-pediatria { background: #0284c7; color: #e0f2fe; }
+.nb-rastreio  { background: #15803d; color: #dcfce7; }
+
+/* Footer da sidebar */
+.sb-footer {
+  padding: 10px 14px;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sb-footer .btn-imp {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  box-shadow: 0 2px 8px rgba(37,99,235,.4);
+  transition: opacity var(--transition), transform .1s;
+}
+.sb-footer .btn-imp:hover { opacity: .9; transform: translateY(-1px); }
+.sb-footer .btn-imp:active { transform: translateY(0); }
+.sb-footer .btn-cfg {
+  width: 100%;
+  padding: 7px;
+  background: rgba(255,255,255,.07);
+  color: rgba(255,255,255,.65);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 600;
+  transition: background var(--transition);
+}
+.sb-footer .btn-cfg:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+/* Painel de campos (o antigo .fb) */
+.sb-panel {
+  display: none;
+  padding: 14px;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.15) transparent;
+}
+.sb-panel.active { display: block; }
+.sb-panel::-webkit-scrollbar { width: 3px; }
+.sb-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 4px; }
+
+/* Campos dentro do painel */
+.sb-panel label, label {
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--slate);
   display: block;
   margin-bottom: 4px;
   letter-spacing: .01em;
 }
-.row { margin-bottom: 12px; }
+.sb-panel label { color: rgba(255,255,255,.6); }
+.row { margin-bottom: 11px; }
 
 input, select, textarea {
   width: 100%;
@@ -144,7 +327,7 @@ input, select, textarea {
   color: var(--text);
   font-family: inherit;
   outline: none;
-  transition: border-color .15s, background .15s, box-shadow .15s;
+  transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
   line-height: 1.4;
 }
 input:focus, select:focus, textarea:focus {
@@ -154,6 +337,20 @@ input:focus, select:focus, textarea:focus {
 }
 textarea { resize: vertical; min-height: 60px; }
 .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+/* Campos dentro do painel sidebar (dark theme) */
+.sb-panel input, .sb-panel select, .sb-panel textarea {
+  background: rgba(255,255,255,.09);
+  border-color: rgba(255,255,255,.14);
+  color: #fff;
+}
+.sb-panel input::placeholder, .sb-panel textarea::placeholder { color: rgba(255,255,255,.3); }
+.sb-panel input:focus, .sb-panel select:focus, .sb-panel textarea:focus {
+  border-color: #60a5fa;
+  background: rgba(255,255,255,.14);
+  box-shadow: 0 0 0 3px rgba(96,165,250,.15);
+}
+.sb-panel select option { background: #1a3a5c; color: #fff; }
 
 /* Botões de ação */
 .btn-imp {
@@ -169,11 +366,10 @@ textarea { resize: vertical; min-height: 60px; }
   margin-top: 8px;
   letter-spacing: .02em;
   box-shadow: 0 3px 10px rgba(26,58,92,.3);
-  transition: opacity .15s, transform .1s;
+  transition: opacity var(--transition), transform .1s;
 }
 .btn-imp:hover { opacity: .92; transform: translateY(-1px); }
 .btn-imp:active { transform: translateY(0); }
-
 .btn-cfg {
   width: 100%;
   padding: 8px;
@@ -185,123 +381,93 @@ textarea { resize: vertical; min-height: 60px; }
   font-size: 11px;
   font-weight: 600;
   margin-top: 6px;
-  transition: background .15s;
+  transition: background var(--transition);
 }
 .btn-cfg:hover { background: var(--blue-lt); }
 
 .vrow { display: flex; gap: 6px; margin-bottom: 12px; }
 .vbtn {
-  flex: 1;
-  padding: 7px;
+  flex: 1; padding: 7px;
   border: 1.5px solid var(--border);
-  border-radius: 7px;
-  cursor: pointer;
-  font-size: 11px;
-  font-weight: 600;
-  background: var(--surface);
-  color: var(--slate2);
-  transition: all .15s;
+  border-radius: 7px; cursor: pointer;
+  font-size: 11px; font-weight: 600;
+  background: var(--surface); color: var(--slate2);
+  transition: all var(--transition);
 }
-.vbtn.on {
-  border-color: var(--navy);
-  background: var(--blue-lt);
-  color: var(--navy);
-}
+.vbtn.on { border-color: var(--navy); background: var(--blue-lt); color: var(--navy); }
 
 .hint {
-  font-size: 10px;
-  color: var(--muted);
-  text-align: center;
-  padding: 7px 10px;
-  background: var(--surface);
-  border-radius: 7px;
-  margin-top: 8px;
-  line-height: 1.6;
+  font-size: 10px; color: var(--muted);
+  text-align: center; padding: 7px 10px;
+  background: var(--surface); border-radius: 7px;
+  margin-top: 8px; line-height: 1.6;
   border: 1px dashed var(--border);
 }
 
 /* Badges de categoria de exames */
 .seclab {
   background: linear-gradient(90deg, var(--navy), var(--navy2));
-  color: #fff;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 4px 10px;
-  margin: 10px 0 4px;
-  border-radius: 5px;
-  letter-spacing: .06em;
-  text-transform: uppercase;
+  color: #fff; font-size: 9px; font-weight: 700;
+  padding: 4px 10px; margin: 10px 0 4px;
+  border-radius: 5px; letter-spacing: .06em; text-transform: uppercase;
 }
 .trisec {
-  background: var(--blue-lt);
-  border: 1px solid var(--blue-bd);
-  border-radius: 6px;
-  padding: 5px 10px;
-  margin: 10px 0 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--navy);
+  background: var(--blue-lt); border: 1px solid var(--blue-bd);
+  border-radius: 6px; padding: 5px 10px; margin: 10px 0 4px;
+  font-size: 11px; font-weight: 700; color: var(--navy);
 }
+.trisec-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 10px; margin: 10px 0 4px; gap: 8px;
+}
+.btn-sel-tri {
+  font-size: 9.5px; font-weight: 600; padding: 3px 8px;
+  background: var(--blue-lt); color: var(--navy);
+  border: 1px solid var(--blue-bd); border-radius: 5px;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: background var(--transition);
+}
+.btn-sel-tri:hover { background: var(--blue-bd); }
+.btn-sel-tri.all-on { background: var(--navy); color: #fff; border-color: var(--navy); }
 
 .cbg  { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 3px; }
 .cbg1 { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
 .cbi  {
-  display: flex;
-  align-items: flex-start;
-  gap: 7px;
-  font-size: 11px;
-  cursor: pointer;
-  line-height: 1.4;
-  padding: 3px 5px;
-  border-radius: 5px;
-  transition: background .1s;
+  display: flex; align-items: flex-start;
+  gap: 7px; font-size: 11px; cursor: pointer;
+  line-height: 1.4; padding: 3px 5px;
+  border-radius: 5px; transition: background .1s;
+  color: var(--text2);
 }
 .cbi:hover { background: var(--blue-lt); }
 .cbi input { width: auto; cursor: pointer; margin-top: 2px; flex-shrink: 0; accent-color: var(--navy); }
 
 .cnt-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  padding: 5px 10px;
-  background: var(--blue-lt);
-  border-radius: 7px;
-  border: 1px solid var(--blue-bd);
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px; padding: 5px 10px;
+  background: var(--blue-lt); border-radius: 7px; border: 1px solid var(--blue-bd);
 }
 .cnt-bar .num { font-size: 11px; font-weight: 700; color: var(--navy); }
 .cnt-bar a { font-size: 10.5px; color: var(--blue); text-decoration: none; font-weight: 500; }
 .cnt-bar a:hover { text-decoration: underline; }
 
 .edit-tip {
-  font-size: 10.5px;
-  color: var(--navy);
-  background: var(--blue-lt);
-  border-radius: 6px;
-  padding: 5px 9px;
-  margin-bottom: 8px;
-  border-left: 3px solid var(--navy);
-  line-height: 1.5;
+  font-size: 10.5px; color: var(--navy); background: var(--blue-lt);
+  border-radius: 6px; padding: 5px 9px; margin-bottom: 8px;
+  border-left: 3px solid var(--navy); line-height: 1.5;
 }
 
 /* --- Modal --- */
 .modal-bg {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(15,23,42,.5);
-  z-index: 999;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(2px);
+  display: none; position: fixed; inset: 0;
+  background: rgba(15,23,42,.55); z-index: 999;
+  align-items: center; justify-content: center; backdrop-filter: blur(3px);
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--white);
-  border-radius: 14px;
-  padding: 24px;
-  width: 340px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  background: var(--white); border-radius: 14px; padding: 24px;
+  width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
 }
 .modal h3 { font-size: 15px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
 .mbtns { display: flex; gap: 8px; margin-top: 14px; }
@@ -309,14 +475,12 @@ textarea { resize: vertical; min-height: 60px; }
 .bok { background: var(--navy); color: #fff; border: none; }
 .bx  { background: none; border: 1.5px solid var(--border); color: var(--slate); }
 
-/* ============ ÁREA PRINCIPAL ============ */
+/* ============================================================
+   ÁREA PRINCIPAL
+   ============================================================ */
 .main-area {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  overflow: auto;
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  background: var(--bg); overflow: auto;
 }
 
 /* Topbar da área principal */
@@ -332,6 +496,7 @@ textarea { resize: vertical; min-height: 60px; }
   position: sticky;
   top: 0;
   z-index: 5;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
 }
 .main-topbar-left { display: flex; align-items: center; gap: 12px; }
 .topbar-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
@@ -352,6 +517,23 @@ textarea { resize: vertical; min-height: 60px; }
   display: flex;
   justify-content: center;
   padding: 28px 28px 40px;
+}
+
+/* Stage de resultado pediátrico */
+#ped-stage {
+  display: none;
+  padding: 24px 28px;
+  flex: 1;
+  overflow: auto;
+}
+#ped-resultado {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  min-height: 200px;
 }
 
 /* O "sheet" agora é a folha A4 centralizada */
@@ -632,73 +814,217 @@ textarea { resize: vertical; min-height: 60px; }
 .p-rapidosbody{padding:8px 10px;display:grid;grid-template-columns:1fr 1fr;gap:4px;}
 .p-rapido-item{display:flex;align-items:center;gap:8px;font-size:11px;line-height:1.4;}
 </style>
-<link rel="stylesheet" media="print" href="./print.css"/>
 </head>
 <body>
 <div id="print-root" style="display:none;"></div>
 
 <div class="app">
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR NOVA — Navegação Hierárquica -->
 <div class="painel">
-  <div class="phd"><div class="ps">UBS Rio Grande &middot; Palho&ccedil;a SC</div><div class="pt">Gerador de Documentos</div></div>
-  <div class="tabs">
-    <button class="tab on" onclick="T('doc',this)">Doc.</button>
-    <button class="tab" onclick="T('lab',this)">Lab.</button>
-    <button class="tab" onclick="T('pn-lab',this)">PN Lab</button>
-    <button class="tab" onclick="T('pn-usg',this)">PN USG</button>
-    <button class="tab" onclick="T('gest',this)">Gest.</button>
-    <button class="tab" onclick="T('img',this)">Imagem</button>
-    <button class="tab" onclick="T('rec',this)">Receita</button>
-    <button class="tab" onclick="T('recc',this)">Rec. C</button>
-    <button class="tab" onclick="T('rapidos',this)">R&#225;pidos</button>
-    <button class="tab" onclick="T('comorb',this)">Rastreio</button>
-    <button class="tab" onclick="T('calc',this)">Calc.</button>
+
+  <!-- Header -->
+  <div class="phd">
+    <div class="ps">UBS Rio Grande &middot; Palho&ccedil;a SC</div>
+    <div class="pt">&#128203; Gerador Cl&iacute;nico</div>
   </div>
-  <div class="fb">
-    <div class="row"><label>Paciente</label><input id="pac" oninput="R()" placeholder="Nome completo"/></div>
-    <div class="row"><label>Data de nascimento</label><input id="nasc" oninput="mD(this)" placeholder="dd/mm/aaaa" maxlength="10"/></div>
 
-    <!-- DOC -->
-    <div id="f-doc">
-      <div class="row"><label>Vias</label><div class="vrow" id="vr-doc"><button class="vbtn on" onclick="sV(1,this,'vr-doc')">1 via</button><button class="vbtn" onclick="sV(2,this,'vr-doc')">2 vias</button></div></div>
-      <div class="row"><label>Modelo</label><select id="modelo" onchange="carregarModelo()">
-        <option value="comp">Declara&ccedil;&atilde;o de comparecimento</option>
-        <option value="atst">Atestado sem afastamento</option>
-        <option value="atsaf">Atestado com afastamento</option>
-        <option value="enc">Encaminhamento a especialista</option>
-        <option value="apt">Aptid&atilde;o para atividades f&iacute;sicas</option>
-        <option value="saud">Bom estado de sa&uacute;de</option>
-        <option value="rel">Relat&oacute;rio m&eacute;dico</option>
-      </select></div>
-      <div id="fp" class="row" style="display:none"><label>Per&iacute;odo</label><select id="periodo" onchange="carregarModelo()"><option>matutino</option><option>vespertino</option><option>noturno</option></select></div>
-      <div id="fd" class="row" style="display:none"><label>Dias de afastamento</label><input id="dias" oninput="carregarModelo()" placeholder="Ex: 3 dias"/></div>
-      <div class="edit-tip">&#9998; T&iacute;tulo e texto edit&aacute;veis</div>
-      <div class="row"><label>T&iacute;tulo</label><input id="doc-titulo" oninput="R()" placeholder="T&iacute;tulo..."/></div>
-      <div class="row"><label>Texto</label><textarea id="doc-corpo" rows="8" oninput="R()" placeholder="Texto..."></textarea></div>
+  <!-- Campos do paciente sempre visíveis -->
+  <div class="sb-pac">
+    <label>Paciente</label>
+    <input id="pac" oninput="R()" placeholder="Nome completo"/>
+    <label>Data de nascimento</label>
+    <input id="nasc" oninput="mD(this);R()" placeholder="dd/mm/aaaa" maxlength="10"/>
+  </div>
+
+  <!-- Navegação hierárquica -->
+  <div class="sb-nav">
+
+    <div class="nav-section">
+      <span class="nav-section-label">Documentos</span>
+
+      <button class="nav-btn active" onclick="NAV('doc',this)">
+        <span class="nav-icon">&#128196;</span> Documento / Atestado
+      </button>
+      <button class="nav-btn" onclick="NAV('img',this)">
+        <span class="nav-icon">&#128247;</span> Imagem
+      </button>
     </div>
 
-    <!-- LAB -->
-    <div id="f-lab" style="display:none">
-      <!-- Lab: sempre 1 via (A4 retrato) -->
-      <div class="row"><label>Pesquisar</label><input id="busca" oninput="filtrar()" placeholder="Buscar exame..."/></div>
-      <div class="cnt-bar"><span class="num"><span id="cnt">0</span> selecionado(s)</span><a href="#" onclick="limpar();return false;">Limpar</a></div>
-      <div id="lista-lab"></div>
-      <!-- "Outros" renomeado para "Dados" -->
-      <div class="row" style="margin-top:8px"><label>Dados cl&iacute;nicos</label><textarea id="labo" rows="2" oninput="R()" placeholder="Dados cl&iacute;nicos adicionais..."></textarea></div>
-      <div class="row"><label>Indica&ccedil;&atilde;o cl&iacute;nica</label><textarea id="labind" rows="2" oninput="R()" placeholder="Ex: Controle HAS e DM2"></textarea></div>
+    <div class="nav-section">
+      <span class="nav-section-label">Laborat&oacute;rio</span>
+
+      <button class="nav-btn" onclick="NAV('lab',this)">
+        <span class="nav-icon">&#129514;</span> Exames laboratoriais
+      </button>
+      <button class="nav-btn" onclick="NAV('rapidos',this)">
+        <span class="nav-icon">&#9889;</span> Testes r&aacute;pidos
+      </button>
+      <button class="nav-btn" onclick="NAV('comorb',this)">
+        <span class="nav-icon">&#128270;</span> Rastreio / Perfil cl&iacute;nico
+        <span class="nav-badge nb-rastreio">IA</span>
+      </button>
     </div>
 
-    <!-- PN LAB -->
-    <div id="f-pn-lab" style="display:none">
-      <div class="g2" style="margin-bottom:7px">
-        <div><label>DUM</label><input id="dum" oninput="mD(this);cIG('dum','igdo')" placeholder="dd/mm/aaaa" maxlength="10"/></div>
-        <div><label>IG pela DUM (auto)</label><input id="igdo" readonly style="background:#e8f4f8;color:#1a3a5c;font-weight:600;" placeholder="auto..."/></div>
-        <div><label>Data USG</label><input id="dusg" oninput="mD(this);R()" placeholder="dd/mm/aaaa" maxlength="10"/></div>
-        <div><label>IG pela USG</label><input id="ig-usg" oninput="R()" placeholder="Ex: 12s2d"/></div>
-        <div><label>DPP</label><input id="dpp" oninput="mD(this);R()" placeholder="dd/mm/aaaa" maxlength="10"/></div>
-        <div><label>Trimestre</label><select id="tri-lab" onchange="R()"><option value="1">1&ordm;</option><option value="2">2&ordm;</option><option value="3">3&ordm;</option></select></div>
+    <div class="nav-section">
+      <span class="nav-section-label">Pr&eacute;-natal</span>
+
+      <!-- Acordeão Pré-natal -->
+      <div class="nav-group" id="grp-prenatal">
+        <button class="nav-group-toggle open" onclick="toggleGroup('prenatal')">
+          <span class="nav-icon">&#129812;</span>
+          Pr&eacute;-natal
+          <span class="nav-badge nb-prenatal">PN</span>
+          <span class="nav-group-arrow">&#9654;</span>
+        </button>
+        <div class="nav-sub open" id="sub-prenatal">
+          <button class="nav-btn" onclick="NAV('pn-lab',this)">
+            <span class="nav-icon">&#129514;</span> Laborat&oacute;rio
+          </button>
+          <button class="nav-btn" onclick="NAV('pn-usg',this)">
+            <span class="nav-icon">&#128266;</span> Imagem / USG
+          </button>
+          <button class="nav-btn" onclick="NAV('gest',this)">
+            <span class="nav-icon">&#128221;</span> Orienta&ccedil;&otilde;es
+          </button>
+          <button class="nav-btn" onclick="NAV('calc',this);setTimeout(function(){var el=document.getElementById('calc-sel');if(el){el.value='ig';calcMostrar();}},100)">
+            <span class="nav-icon">&#128337;</span> Calculadora de IG
+          </button>
+        </div>
       </div>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-label">Pediatria</span>
+
+      <!-- Acordeão Pediatria -->
+      <div class="nav-group" id="grp-pediatria">
+        <button class="nav-group-toggle" onclick="toggleGroup('pediatria')">
+          <span class="nav-icon">&#128118;</span>
+          Pediatria
+          <span class="nav-badge nb-pediatria">PED</span>
+          <span class="nav-group-arrow">&#9654;</span>
+        </button>
+        <div class="nav-sub" id="sub-pediatria">
+          <button class="nav-btn" onclick="NAV('ped-lab',this)">
+            <span class="nav-icon">&#129514;</span> Laborat&oacute;rio pedi&aacute;trico
+          </button>
+          <button class="nav-btn" onclick="NAV('ped-soap',this)">
+            <span class="nav-icon">&#128203;</span> SOAP Puericultura
+          </button>
+          <button class="nav-btn" onclick="NAV('ped-enc',this)">
+            <span class="nav-icon">&#128228;</span> Encaminhamentos
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-label">Prescri&ccedil;&atilde;o</span>
+
+      <button class="nav-btn" onclick="NAV('rec',this)">
+        <span class="nav-icon">&#128138;</span> Receita simples
+      </button>
+      <button class="nav-btn" onclick="NAV('recc',this)">
+        <span class="nav-icon">&#128274;</span> Receita tipo C
+      </button>
+    </div>
+
+    <div class="nav-section">
+      <span class="nav-section-label">Calculadoras</span>
+
+      <button class="nav-btn" onclick="NAV('calc',this)">
+        <span class="nav-icon">&#129518;</span> Calculadoras cl&iacute;nicas
+      </button>
+    </div>
+
+  </div><!-- /sb-nav -->
+
+  <!-- Painéis de campos (um por módulo) -->
+
+  <!-- DOC -->
+  <div id="f-doc" class="sb-panel active">
+    <div class="row"><label>Vias</label><div class="vrow" id="vr-doc"><button class="vbtn on" onclick="sV(1,this,'vr-doc')">1 via</button><button class="vbtn" onclick="sV(2,this,'vr-doc')">2 vias</button></div></div>
+    <div class="row"><label>Modelo</label><select id="modelo" onchange="carregarModelo()">
+      <option value="comp">Declara&ccedil;&atilde;o de comparecimento</option>
+      <option value="atst">Atestado sem afastamento</option>
+      <option value="atsaf">Atestado com afastamento</option>
+      <option value="enc">Encaminhamento a especialista</option>
+      <option value="apt">Aptid&atilde;o para atividades f&iacute;sicas</option>
+      <option value="saud">Bom estado de sa&uacute;de</option>
+      <option value="rel">Relat&oacute;rio m&eacute;dico</option>
+    </select></div>
+    <div id="fp" class="row" style="display:none"><label>Per&iacute;odo</label><select id="periodo" onchange="carregarModelo()"><option>matutino</option><option>vespertino</option><option>noturno</option></select></div>
+    <div id="fd" class="row" style="display:none"><label>Dias de afastamento</label><input id="dias" oninput="carregarModelo()" placeholder="Ex: 3 dias"/></div>
+    <div class="edit-tip">&#9998; T&iacute;tulo e texto edit&aacute;veis</div>
+    <div class="row"><label>T&iacute;tulo</label><input id="doc-titulo" oninput="R()" placeholder="T&iacute;tulo..."/></div>
+    <div class="row"><label>Texto</label><textarea id="doc-corpo" rows="8" oninput="R()" placeholder="Texto..."></textarea></div>
+  </div>
+
+  <!-- LAB -->
+  <div id="f-lab" class="sb-panel">
+    <div class="row"><label>Pesquisar</label><input id="busca" oninput="filtrar()" placeholder="Buscar exame..."/></div>
+    <div class="cnt-bar"><span class="num"><span id="cnt">0</span> selecionado(s)</span><a href="#" onclick="limpar();return false;">Limpar</a></div>
+    <div id="lista-lab"></div>
+    <div class="row" style="margin-top:8px"><label>Dados cl&iacute;nicos</label><textarea id="labo" rows="2" oninput="R()" placeholder="Dados cl&iacute;nicos adicionais..."></textarea></div>
+    <div class="row"><label>Indica&ccedil;&atilde;o cl&iacute;nica</label><textarea id="labind" rows="2" oninput="R()" placeholder="Ex: Controle HAS e DM2"></textarea></div>
+  </div>
+
+  <!-- PN LAB -->
+  <div id="f-pn-lab" class="sb-panel">
+    <div class="g2" style="margin-bottom:7px">
+      <div><label>DUM</label><input id="dum" oninput="mD(this);cIG('dum','igdo')" placeholder="dd/mm/aaaa" maxlength="10"/></div>
+      <div><label>IG pela DUM (auto)</label><input id="igdo" readonly style="background:rgba(255,255,255,.05);color:#93c5fd;font-weight:600;" placeholder="auto..."/></div>
+      <div><label>Data USG</label><input id="dusg" oninput="mD(this);R()" placeholder="dd/mm/aaaa" maxlength="10"/></div>
+      <div><label>IG pela USG</label><input id="ig-usg" oninput="R()" placeholder="Ex: 12s2d"/></div>
+      <div><label>DPP</label><input id="dpp" oninput="mD(this);R()" placeholder="dd/mm/aaaa" maxlength="10"/></div>
+      <div><label>Trimestre</label><select id="tri-lab" onchange="R()"><option value="1">1&ordm;</option><option value="2">2&ordm;</option><option value="3">3&ordm;</option></select></div>
+    </div>
+    <div class="trisec-hd"><span>1&ordm; Trimestre</span><button class="btn-sel-tri" onclick="selTri('1',this)">Selecionar todos</button></div>
+    <div class="cbg" id="tri-grp-1">
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Hemograma completo</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Glicemia de jejum</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Parcial de urina</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Urocultura</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> TSH</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> TSA</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Grupo Sang. + Rh</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Anti-HBs</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Toxoplasmose IgM/IgG</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> VDRL</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> HIV</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Hepatite C</label>
+      <label class="cbi"><input type="checkbox" data-t="1" onchange="syncTriBtn('1');R()"> Rub&eacute;ola IgG</label>
+    </div>
+    <div class="trisec-hd"><span>2&ordm; Trimestre</span><button class="btn-sel-tri" onclick="selTri('2',this)">Selecionar todos</button></div>
+    <div class="cbg" id="tri-grp-2">
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Hemograma completo</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Glicemia de jejum</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Parcial de urina</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Urocultura</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> TSA</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Coombs indireto</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> Toxoplasmose IgM/IgG</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> VDRL</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> HIV</label>
+      <label class="cbi"><input type="checkbox" data-t="2" onchange="syncTriBtn('2');R()"> TOTG 75g</label>
+    </div>
+    <div class="trisec-hd"><span>3&ordm; Trimestre</span><button class="btn-sel-tri" onclick="selTri('3',this)">Selecionar todos</button></div>
+    <div class="cbg" id="tri-grp-3">
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Hemograma completo</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Glicemia de jejum</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Parcial de urina</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Urocultura</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> TSA</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Coombs indireto</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Toxoplasmose IgM/IgG</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> VDRL</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> HIV</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> SWAB retovaginal (Strepto B)</label>
+      <label class="cbi"><input type="checkbox" data-t="3" onchange="syncTriBtn('3');R()"> Hepatite B (HBsAg)</label>
+    </div>
+    <div class="row" style="margin-top:8px"><label>Dados cl&iacute;nicos</label><textarea id="pno-lab" rows="2" oninput="R()" placeholder="Dados adicionais..."></textarea></div>
+  </div>
       <!-- 1º Trimestre -->
       <div class="trisec-hd">
         <span>1&ordm; Trimestre</span>
@@ -760,7 +1086,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- PN USG -->
-    <div id="f-pn-usg" style="display:none">
+    <div id="f-pn-usg" class="sb-panel">
       <div class="g2" style="margin-bottom:7px">
         <div><label>DUM</label><input id="dum2" oninput="mD(this);cIG('dum2','igdo2')" placeholder="dd/mm/aaaa" maxlength="10"/></div>
         <div><label>IG pela DUM (auto)</label><input id="igdo2" readonly style="background:#e8f4f8;color:#1a3a5c;font-weight:600;" placeholder="auto..."/></div>
@@ -780,7 +1106,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- GESTAÇÃO -->
-    <div id="f-gest" style="display:none">
+    <div id="f-gest" class="sb-panel">
       <!-- Dados gestacionais -->
       <div class="g2" style="margin-bottom:10px;">
         <div><label>DUM</label><input id="dum3" oninput="mD(this);cIG('dum3','igdo3')" placeholder="dd/mm/aaaa" maxlength="10"/></div>
@@ -875,7 +1201,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- IMAGEM -->
-    <div id="f-img" style="display:none">
+    <div id="f-img" class="sb-panel">
       <div class="row"><label>Vias</label><div class="vrow" id="vr-img"><button class="vbtn on" onclick="sV(1,this,'vr-img')">1 via</button><button class="vbtn" onclick="sV(2,this,'vr-img')">2 vias</button></div></div>
 
       <!-- Lista de exames adicionados -->
@@ -1012,14 +1338,14 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- RECEITA -->
-    <div id="f-rec" style="display:none">
+    <div id="f-rec" class="sb-panel">
       <div class="row"><label>Vias</label><div class="vrow" id="vr-rec"><button class="vbtn on" onclick="sV(1,this,'vr-rec')">1 via</button><button class="vbtn" onclick="sV(2,this,'vr-rec')">2 vias</button></div></div>
       <div class="row"><label>Medicamentos</label><textarea id="recmed" rows="7" oninput="R()" placeholder="1. AMOXICILINA 500mg&#10;   1cp 3x ao dia por 7 dias"></textarea></div>
       <div class="row"><label>Orienta&ccedil;&otilde;es</label><textarea id="recori" rows="2" oninput="R()" placeholder="Retornar em 30 dias."></textarea></div>
     </div>
 
     <!-- RECEITA C -->
-    <div id="f-recc" style="display:none">
+    <div id="f-recc" class="sb-panel">
       <div class="g2" style="margin-bottom:8px">
         <div><label>CNS</label><input id="cns" oninput="R()" placeholder="700..."/></div>
         <div><label>Sexo</label><select id="sexo" onchange="R()"><option>F</option><option>M</option></select></div>
@@ -1032,7 +1358,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- TESTES RÁPIDOS -->
-    <div id="f-rapidos" style="display:none">
+    <div id="f-rapidos" class="sb-panel">
       <div class="row"><label>Vias</label><div class="vrow" id="vr-rapidos"><button class="vbtn on" onclick="sV(1,this,'vr-rapidos')">1 via</button><button class="vbtn" onclick="sV(2,this,'vr-rapidos')">2 vias</button></div></div>
       <div class="trisec">Testes R&aacute;pidos</div>
       <div class="cbg1">
@@ -1045,7 +1371,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- COMORBIDADES -->
-    <div id="f-comorb" style="display:none">
+    <div id="f-comorb" class="sb-panel">
       <div class="edit-tip">&#129302; Preencha os dados e clique em <b>Gerar exames</b></div>
       <div class="g2" style="margin-bottom:10px">
         <div><label>Idade</label><input id="cb-idade" type="number" min="0" max="120" placeholder="Ex: 58" oninput="cbAutoGerar()"/></div>
@@ -1084,7 +1410,7 @@ textarea { resize: vertical; min-height: 60px; }
     </div>
 
     <!-- CALCULADORAS -->
-    <div id="f-calc" style="display:none">
+    <div id="f-calc" class="sb-panel">
       <div class="edit-tip">&#129518; Selecione a calculadora desejada</div>
       <div class="row">
         <label>Calculadora</label>
@@ -1232,11 +1558,107 @@ textarea { resize: vertical; min-height: 60px; }
         <button class="btn-imp" onclick="calcImprimir()" style="margin:0;padding:9px;font-size:11px">&#128438; Imprimir resultado</button>
       </div>
     </div>
-    <button class="btn-imp" onclick="IMP()" id="btn-imp-main">&#128438; Imprimir</button>
-    <button class="btn-cfg" onclick="abrirCfg()">&#9998; Alterar m&eacute;dico / CRM</button>
-    <div class="hint">1 via &rarr; A4 Retrato &nbsp;&middot;&nbsp; 2 vias &rarr; A4 Paisagem</div>
+  <!-- PEDIATRIA — Laboratório -->
+  <div id="f-ped-lab" class="sb-panel">
+    <div class="edit-tip">&#128118; Exames pedi&aacute;tricos conforme faixa et&aacute;ria</div>
+    <div class="g2" style="margin-bottom:10px">
+      <div><label>Idade</label><input id="ped-idade" type="number" min="0" max="18" step="0.5" placeholder="Ex: 2" oninput="pedLabAutoGerar()"/></div>
+      <div><label>Unidade</label><select id="ped-idade-un" onchange="pedLabAutoGerar()"><option value="anos">Anos</option><option value="meses">Meses</option></select></div>
+    </div>
+    <div class="row"><label>Sexo</label><select id="ped-sexo" onchange="pedLabAutoGerar()"><option value="">—</option><option value="M">Masculino</option><option value="F">Feminino</option></select></div>
+    <div class="edit-tip" style="margin-top:4px">Selecione os exames desejados</div>
+    <div class="cbg1" id="ped-lab-lista">
+      <label class="cbi"><input type="checkbox" data-pl="Hemograma" onchange="R()"> Hemograma completo</label>
+      <label class="cbi"><input type="checkbox" data-pl="Glicemia de jejum" onchange="R()"> Glicemia de jejum</label>
+      <label class="cbi"><input type="checkbox" data-pl="Ferro sérico" onchange="R()"> Ferro s&eacute;rico</label>
+      <label class="cbi"><input type="checkbox" data-pl="Ferritina" onchange="R()"> Ferritina</label>
+      <label class="cbi"><input type="checkbox" data-pl="Vitamina D (25-OH)" onchange="R()"> Vitamina D (25-OH)</label>
+      <label class="cbi"><input type="checkbox" data-pl="EAS (Urina tipo 1)" onchange="R()"> EAS (Urina tipo 1)</label>
+      <label class="cbi"><input type="checkbox" data-pl="Parasitológico de fezes (EPF)" onchange="R()"> Parasitol&oacute;gico de fezes (EPF)</label>
+      <label class="cbi"><input type="checkbox" data-pl="TSH (triagem)" onchange="R()"> TSH (triagem)</label>
+      <label class="cbi"><input type="checkbox" data-pl="Cálcio" onchange="R()"> C&aacute;lcio</label>
+      <label class="cbi"><input type="checkbox" data-pl="Fósforo" onchange="R()"> F&oacute;sforo</label>
+      <label class="cbi"><input type="checkbox" data-pl="Lipidograma (≥ 10 anos)" onchange="R()"> Lipidograma (&ge; 10 anos)</label>
+    </div>
+    <div class="row" style="margin-top:8px"><label>Indica&ccedil;&atilde;o cl&iacute;nica</label><textarea id="ped-lab-ind" rows="2" oninput="R()" placeholder="Ex: Puericultura 2 anos, rastreio de anemia ferropriva..."></textarea></div>
   </div>
-</div>
+
+  <!-- PEDIATRIA — SOAP Puericultura -->
+  <div id="f-ped-soap" class="sb-panel">
+    <div class="edit-tip">&#128203; Preencha e clique em <b>Gerar SOAP</b></div>
+    <div class="row"><label>Fam&iacute;lia</label><input id="soap-familia" placeholder="Sobrenome da fam&iacute;lia" oninput="pedSoapPreview()"/></div>
+    <div class="g2">
+      <div><label>Idade (anos)</label><input id="soap-anos" type="number" min="0" max="18" placeholder="Ex: 2" oninput="pedSoapPreview()"/></div>
+      <div><label>Meses</label><input id="soap-meses" type="number" min="0" max="11" placeholder="Ex: 4" oninput="pedSoapPreview()"/></div>
+      <div><label>Peso (kg)</label><input id="soap-peso" type="number" step="0.1" placeholder="Ex: 12,5" oninput="pedSoapCalc()"/></div>
+      <div><label>Altura (cm)</label><input id="soap-altura" type="number" step="0.1" placeholder="Ex: 87" oninput="pedSoapCalc()"/></div>
+      <div><label>Per&iacute;metro Cef. (cm)</label><input id="soap-pc" type="number" step="0.1" placeholder="Ex: 47" oninput="pedSoapPreview()"/></div>
+      <div><label>IMC (auto)</label><input id="soap-imc" readonly style="background:rgba(255,255,255,.05);color:#93c5fd;font-weight:600;"/></div>
+    </div>
+    <div class="row"><label>Padr&atilde;o alimentar</label>
+      <select id="soap-alim" onchange="pedSoapPreview()">
+        <option value="variada">Variada, rica em frutas e legumes, pobre em ultraprocessados</option>
+        <option value="irregular">Irregular, rica em ultraprocessados</option>
+        <option value="seletiva">Com seletividade alimentar</option>
+      </select>
+    </div>
+    <div class="row"><label>Telas (horas/dia)</label><input id="soap-telas" type="number" min="0" max="24" step="0.5" placeholder="Ex: 3" oninput="pedSoapPreview()"/></div>
+    <div class="row"><label>Vacina&ccedil;&atilde;o</label>
+      <select id="soap-vacina" onchange="pedSoapPreview()">
+        <option value="adequada">Adequada para a idade</option>
+        <option value="pendente">Pendente / incompleta</option>
+        <option value="nao-avaliada">N&atilde;o avaliada nesta consulta</option>
+      </select>
+    </div>
+    <div class="row"><label>Suplementa&ccedil;&atilde;o</label>
+      <select id="soap-supl" onchange="pedSoapPreview()">
+        <option value="ferro-vitd">Sulfato ferroso + Vitamina AD-Til</option>
+        <option value="vitd">Vitamina AD-Til</option>
+        <option value="ferro">Sulfato ferroso</option>
+        <option value="nenhuma">Sem suplementa&ccedil;&atilde;o atual</option>
+      </select>
+    </div>
+    <div class="trisec" style="margin-top:8px">Marco DNPM &mdash; marcar os presentes</div>
+    <div class="cbg1" id="soap-dnpm-lista" style="max-height:200px;overflow-y:auto;"></div>
+    <div class="row" style="margin-top:8px"><label>Hist&oacute;rico gestacional (G/P/A)</label><input id="soap-gpa" placeholder="Ex: G2P1A0" oninput="pedSoapPreview()"/></div>
+    <div class="row"><label>Observa&ccedil;&otilde;es adicionais</label><textarea id="soap-obs" rows="2" placeholder="Queixas, anamnese livre..."></textarea></div>
+    <button class="btn-imp" style="margin-top:4px" onclick="pedGerarSOAP()">&#9889; Gerar SOAP</button>
+  </div>
+
+  <!-- PEDIATRIA — Encaminhamentos -->
+  <div id="f-ped-enc" class="sb-panel">
+    <div class="edit-tip">&#128228; Gere encaminhamentos r&aacute;pidos e edit&aacute;veis</div>
+    <div class="row"><label>Especialidade</label>
+      <select id="enc-tipo" onchange="pedEncPreview()">
+        <option value="">— selecione —</option>
+        <option value="fono">Fonoaudiologia</option>
+        <option value="psico">Psicoterapia</option>
+        <option value="ceiditea">CEIDITEA (autismo)</option>
+        <option value="pediatria">Pediatria especializada</option>
+        <option value="neuroped">Neuropediatria</option>
+        <option value="oftalmologia">Oftalmologia</option>
+        <option value="ortopedia">Ortopedia pedi&aacute;trica</option>
+        <option value="outro">Outro especialista</option>
+      </select>
+    </div>
+    <div class="row" id="enc-outro-row" style="display:none"><label>Especialidade (livre)</label><input id="enc-outro" oninput="pedEncPreview()" placeholder="Ex: Endocrinologia pedi&aacute;trica"/></div>
+    <div class="row"><label>Motivo / Hip&oacute;tese diagn&oacute;stica</label><textarea id="enc-motivo" rows="3" oninput="pedEncPreview()" placeholder="Ex: Atraso de linguagem, suspeita de TDAH..."></textarea></div>
+    <div class="row"><label>Prioridade</label>
+      <select id="enc-prioridade" onchange="pedEncPreview()">
+        <option value="eletivo">Eletivo</option>
+        <option value="prioritario">Priorit&aacute;rio</option>
+        <option value="urgente">Urgente</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Footer com botão de impressão -->
+  <div class="sb-footer">
+    <button class="btn-imp" id="btn-imp-main" onclick="IMP()">&#128438; Imprimir</button>
+    <button class="btn-cfg" onclick="abrirCfg()">&#9998; Alterar m&eacute;dico / CRM</button>
+  </div>
+
+</div><!-- /painel -->
 
 <div class="modal-bg" id="modal"><div class="modal">
   <h3>Dados do m&eacute;dico</h3>
@@ -1272,6 +1694,18 @@ textarea { resize: vertical; min-height: 60px; }
   <div id="calc-stage" style="display:none;padding:24px 28px;flex:1;overflow:auto;">
     <div id="calc-resultado" style="max-width:700px;margin:0 auto;background:#fff;border-radius:10px;box-shadow:0 4px 24px rgba(0,0,0,.1);overflow:hidden;"></div>
   </div>
+
+  <!-- Resultado Pediatria (Lab + SOAP + Encaminhamentos) -->
+  <div id="ped-stage">
+    <div id="ped-resultado">
+      <div style="padding:48px 32px;text-align:center;color:#94a3b8;">
+        <div style="font-size:32px;margin-bottom:12px;">&#128118;</div>
+        <div style="font-size:14px;font-weight:600;color:#64748b;margin-bottom:6px;">M&oacute;dulo Pediatria</div>
+        <div style="font-size:12px;">Preencha o formul&aacute;rio ao lado para gerar o conte&uacute;do.</div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 </div>
@@ -1323,27 +1757,471 @@ function calcIGHoje(dum,dusg,igusg){
   return null;
 }
 function cIG(dId,oId){var d=parseDate(g(dId)),el=document.getElementById(oId);if(!el)return;if(d){var t=new Date();t.setHours(0,0,0,0);var di=Math.floor((t-d)/86400000);el.value=di>=0?Math.floor(di/7)+'s'+(di%7)+'d':'inv\u00e1lida';}else el.value='';R();}
-function T(t,el){
-  TAB=t;VIAS=1;
-  document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('on');});
-  el.classList.add('on');
-  var allTabs=['doc','lab','pn-lab','pn-usg','gest','img','rec','recc','rapidos','comorb','calc'];
-  allTabs.forEach(function(x){var fe=document.getElementById('f-'+x);if(fe)fe.style.display=x===t?'block':'none';});
-  document.querySelectorAll('.vbtn').forEach(function(b){b.classList.remove('on');});
-  document.querySelectorAll('.vbtn:first-child').forEach(function(b){b.classList.add('on');});
-  // Mostrar/ocultar painéis da main area
-  var isSpecial = t==='comorb'||t==='calc';
-  document.getElementById('doc-stage-main').style.display = isSpecial?'none':'flex';
-  document.getElementById('comorb-stage').style.display  = t==='comorb'?'flex':'none';
-  document.getElementById('calc-stage').style.display    = t==='calc'?'flex':'none';
-  document.getElementById('btn-imp-main').style.display  = isSpecial?'none':'block';
-  // Topbar
-  var lbl2={doc:'Documento',lab:'Exames Laboratoriais','pn-lab':'Pr\u00e9-Natal Lab','pn-usg':'Pr\u00e9-Natal USG',gest:'Orienta\u00e7\u00f5es',img:'Imagem',rec:'Receit\u00e1rio',recc:'Receita C',rapidos:'Testes R\u00e1pidos',comorb:'Rastreio \u2014 Exames por Perfil Cl\u00ednico',calc:'Calculadoras Cl\u00ednicas'};
-  document.getElementById('pvlbl').textContent=lbl2[t]||'';
-  document.getElementById('pvbadge').style.display=isSpecial?'none':'';
-  if(!isSpecial) R();
-  if(t==='comorb') cbRenderResultado();
-  if(t==='calc') calcMostrar();
+// ================================================================
+// NAVEGAÇÃO — NAV() substitui T(), compatível com todas as abas
+// ================================================================
+var TAB_ATUAL = 'doc';
+
+// Mapeamento: id do painel → tab visual que usa IMP() normal
+var TABS_NORMAIS = ['doc','lab','pn-lab','pn-usg','gest','img','rec','recc','rapidos'];
+var TABS_ESPECIAIS = ['comorb','calc'];
+var TABS_PEDIATRIA = ['ped-lab','ped-soap','ped-enc'];
+
+function NAV(tab, elBtn){
+  TAB_ATUAL = tab;
+
+  // Compatibilidade: TAB ainda é usado pelos módulos internos
+  TAB = tab;
+  VIAS = 1;
+
+  // Desativa todos os botões nav
+  document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.remove('active'); });
+  if(elBtn) elBtn.classList.add('active');
+
+  // Oculta todos os painéis
+  document.querySelectorAll('.sb-panel').forEach(function(p){ p.classList.remove('active'); });
+
+  // Ativa o painel correto
+  var panel = document.getElementById('f-'+tab);
+  if(panel) panel.classList.add('active');
+
+  // Reseta vbtn
+  document.querySelectorAll('.vbtn').forEach(function(b){ b.classList.remove('on'); });
+  document.querySelectorAll('.vbtn:first-child').forEach(function(b){ b.classList.add('on'); });
+
+  // Mostra/oculta botão de imprimir principal
+  var btnMain = document.getElementById('btn-imp-main');
+  if(btnMain){
+    var isPed = TABS_PEDIATRIA.indexOf(tab) >= 0;
+    btnMain.style.display = (tab === 'comorb' || tab === 'calc' || isPed) ? 'none' : 'block';
+  }
+
+  // Atualiza topbar
+  var lblMap = {
+    doc:'Documento / Atestado', lab:'Exames Laboratoriais',
+    'pn-lab':'Pré-Natal — Laboratório', 'pn-usg':'Pré-Natal — Imagem / USG',
+    gest:'Orientações Pré-Natal', img:'Solicitação de Imagem',
+    rec:'Receituário Médico', recc:'Receita Tipo C',
+    rapidos:'Testes Rápidos', comorb:'Rastreio — Perfil Clínico',
+    calc:'Calculadoras Clínicas', 'ped-lab':'Laboratório Pediátrico',
+    'ped-soap':'SOAP Puericultura', 'ped-enc':'Encaminhamentos Pediátricos'
+  };
+  var pvlbl = document.getElementById('pvlbl');
+  var pvbadge = document.getElementById('pvbadge');
+  if(pvlbl) pvlbl.textContent = lblMap[tab] || tab;
+
+  // Mostra/oculta stages
+  var isSpecial = tab === 'comorb' || tab === 'calc';
+  var isPed = TABS_PEDIATRIA.indexOf(tab) >= 0;
+  var docStage = document.getElementById('doc-stage-main');
+  var combStage = document.getElementById('comorb-stage');
+  var calcStage = document.getElementById('calc-stage');
+  var pedStage = document.getElementById('ped-stage');
+
+  if(docStage)  docStage.style.display  = (!isSpecial && !isPed) ? 'flex' : 'none';
+  if(combStage) combStage.style.display  = tab === 'comorb' ? 'flex' : 'none';
+  if(calcStage) calcStage.style.display  = tab === 'calc'   ? 'flex' : 'none';
+  if(pedStage)  pedStage.style.display   = isPed            ? 'flex' : 'none';
+  if(pvbadge)   pvbadge.style.display    = (isSpecial || isPed) ? 'none' : '';
+
+  if(!isSpecial && !isPed) R();
+  if(tab === 'comorb')  cbRenderResultado();
+  if(tab === 'calc')    calcMostrar();
+  if(tab === 'ped-lab') pedLabRender();
+  if(tab === 'ped-soap'){ pedSoapDNPM(); pedSoapCalc(); }
+  if(tab === 'ped-enc') pedEncPreview();
+  if(tab === 'gest')    gestMostrarTrimestre();
+}
+
+// Compatibilidade retroativa com código antigo
+function T(t, el){
+  NAV(t, null);
+  // Tenta ativar o botão nav correspondente
+  document.querySelectorAll('.nav-btn').forEach(function(b){
+    if(b.getAttribute('onclick') && b.getAttribute('onclick').indexOf("'"+t+"'") >= 0){
+      b.classList.add('active');
+    }
+  });
+}
+
+// Toggle de acordeões na sidebar
+function toggleGroup(name){
+  var toggle = document.querySelector('#grp-'+name+' .nav-group-toggle');
+  var sub    = document.getElementById('sub-'+name);
+  if(!toggle || !sub) return;
+  var isOpen = toggle.classList.contains('open');
+  toggle.classList.toggle('open', !isOpen);
+  sub.classList.toggle('open', !isOpen);
+}
+
+// ================================================================
+// MÓDULO PEDIATRIA — Laboratório
+// ================================================================
+// Regras por faixa etária (meses)
+var PED_LAB_REGRAS = [
+  { max: 6,   exames: ['Hemograma','Ferro sérico','Ferritina','Vitamina D (25-OH)','Cálcio','TSH (triagem)'] },
+  { max: 12,  exames: ['Hemograma','Ferro sérico','Ferritina','Vitamina D (25-OH)','Cálcio','EAS (Urina tipo 1)'] },
+  { max: 24,  exames: ['Hemograma','Ferro sérico','Ferritina','Vitamina D (25-OH)','EAS (Urina tipo 1)','Parasitológico de fezes (EPF)','Glicemia de jejum'] },
+  { max: 60,  exames: ['Hemograma','Ferro sérico','Ferritina','Vitamina D (25-OH)','EAS (Urina tipo 1)','Parasitológico de fezes (EPF)','Glicemia de jejum','Cálcio','Fósforo'] },
+  { max: 120, exames: ['Hemograma','Glicemia de jejum','Vitamina D (25-OH)','EAS (Urina tipo 1)','Parasitológico de fezes (EPF)','Cálcio','Fósforo','TSH (triagem)'] },
+  { max: 216, exames: ['Hemograma','Glicemia de jejum','Lipidograma (≥ 10 anos)','Vitamina D (25-OH)','EAS (Urina tipo 1)','Cálcio','TSH (triagem)'] }
+];
+
+function pedIdadeMeses(){
+  var anos = parseFloat(document.getElementById('ped-idade').value) || 0;
+  var un   = document.getElementById('ped-idade-un').value;
+  return un === 'anos' ? anos * 12 : anos;
+}
+
+function pedLabAutoGerar(){
+  var meses = pedIdadeMeses();
+  if(meses <= 0) return;
+  var regra = null;
+  for(var i = 0; i < PED_LAB_REGRAS.length; i++){
+    if(meses <= PED_LAB_REGRAS[i].max){ regra = PED_LAB_REGRAS[i]; break; }
+  }
+  if(!regra) return;
+  // Marca os checkboxes sugeridos
+  document.querySelectorAll('input[data-pl]').forEach(function(cb){
+    cb.checked = regra.exames.indexOf(cb.getAttribute('data-pl')) >= 0;
+  });
+  R();
+}
+
+function pedLabRender(){
+  // Atualiza resultado na main area
+  var el = document.getElementById('ped-resultado');
+  if(!el) return;
+  var exames = [];
+  document.querySelectorAll('input[data-pl]:checked').forEach(function(cb){
+    exames.push(cb.getAttribute('data-pl'));
+  });
+  if(!exames.length){
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;">Selecione a faixa et&aacute;ria e os exames desejados.</div>';
+    return;
+  }
+  var nome = document.getElementById('pac').value || '\u2014';
+  var ind  = document.getElementById('ped-lab-ind').value;
+  var c1 = [], c2 = [];
+  exames.forEach(function(e,i){ if(i%2===0) c1.push(e); else c2.push(e); });
+  function mkRows(arr){ return arr.map(function(e){ return '<div class="p-ex-row"><span class="cx-on" style="display:inline-block;width:11px;height:11px;background:#1a3a5c;border-radius:2px;flex-shrink:0;margin-right:6px;"></span>'+e+'</div>'; }).join(''); }
+  el.innerHTML =
+    '<div style="background:linear-gradient(90deg,#1a3a5c,#1e5080);color:#fff;padding:14px 20px;">'
+    +'<div style="font-size:9px;opacity:.75;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;">Laboratório Pediátrico</div>'
+    +'<div style="font-size:16px;font-weight:700;">'+nome+'</div></div>'
+    +'<div style="padding:16px;">'
+    +'<div style="font-size:10px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.07em;background:#f0f9ff;border-radius:4px;padding:3px 9px;margin-bottom:8px;">Exames Solicitados</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;font-size:11px;">'
+    +'<div style="border-right:1px solid #e2e8f0;">'+mkRows(c1)+'</div>'
+    +'<div>'+mkRows(c2)+'</div></div>'
+    +(ind?'<div style="margin-top:12px;background:#f0f9ff;border:1.5px solid #bfdbfe;border-radius:5px;padding:9px 12px;font-size:11px;color:#1e293b;"><b style=\'font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;\'>Indicação clínica</b><br>'+ind+'</div>':'')
+    +'<div style="margin-top:14px;display:flex;gap:8px;">'
+    +'<button onclick="pedLabImprimir()" style="flex:1;padding:9px;background:#1a3a5c;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;">&#128438; Imprimir</button>'
+    +'</div></div>';
+}
+
+function pedLabImprimir(){
+  var exames = [];
+  document.querySelectorAll('input[data-pl]:checked').forEach(function(cb){ exames.push(cb.getAttribute('data-pl')); });
+  if(!exames.length){ alert('Nenhum exame selecionado.'); return; }
+  var ind = document.getElementById('ped-lab-ind').value;
+  var c1=[], c2=[];
+  exames.forEach(function(e,i){ if(i%2===0) c1.push(e); else c2.push(e); });
+  function mkRows(arr){ return arr.map(function(e){ return '<div class="p-ex-row"><span class="cx-on"></span>'+e+'</div>'; }).join(''); }
+  var conteudo = pCab()+pPac()
+    +'<div class="p-titulo">Solicita\u00e7\u00e3o de Exames \u2014 Pediatria</div>'
+    +'<div class="p-grid2"><div class="p-grid2-col">'+mkRows(c1)+'</div><div class="p-grid2-col">'+mkRows(c2)+'</div></div>'
+    +(ind?'<div class="p-indicbox"><div class="p-indicboxhd">Indica\u00e7\u00e3o Cl\u00ednica</div><div class="p-indicbody">'+ind+'</div></div>':'');
+  var fh = folha(conteudo, false);
+  var CSS = buildCSS1Via();
+  abrirJanelaImp(CSS, fh, 'Pediatria \u2014 Exames');
+}
+
+// ================================================================
+// MÓDULO PEDIATRIA — SOAP Puericultura
+// ================================================================
+// Marcos DNPM por faixa etária (meses)
+var DNPM_MARCOS = [
+  { faixa:'1–3 meses', min:1, max:3, marcos:[
+    'Segura objetos colocados na mão', 'Sorri em resposta a estímulo social',
+    'Segue objeto com os olhos', 'Emite sons diferentes do choro'
+  ]},
+  { faixa:'4–6 meses', min:4, max:6, marcos:[
+    'Sustenta a cabeça firmemente', 'Rola de supino para prono',
+    'Pega objetos voluntariamente', 'Localiza som', 'Vocaliza sílabas'
+  ]},
+  { faixa:'7–9 meses', min:7, max:9, marcos:[
+    'Senta sem apoio', 'Passa objetos de uma mão à outra',
+    'Balbucia (mamã, papá)', 'Estranhamento (8 meses)', 'Pinça inferior'
+  ]},
+  { faixa:'10–12 meses', min:10, max:12, marcos:[
+    'Fica em pé com apoio', 'Pinça superior (polegar-indicador)',
+    'Imita gestos (tchau)', 'Compreende "não"', 'Fala 1–2 palavras com sentido'
+  ]},
+  { faixa:'12–18 meses', min:12, max:18, marcos:[
+    'Anda sozinho', 'Fala pelo menos 3 palavras', 'Aponta para objetos de interesse',
+    'Alimenta-se com colher', 'Compreende comandos simples'
+  ]},
+  { faixa:'18–24 meses', min:18, max:24, marcos:[
+    'Sobe escadas com apoio', 'Fala 15–20 palavras', 'Combina 2 palavras',
+    'Brinca de faz-de-conta simples', 'Usa garfo'
+  ]},
+  { faixa:'2–3 anos', min:24, max:36, marcos:[
+    'Corre', 'Faz frases de 3+ palavras', 'Nomeia cores',
+    'Brinca com outras crianças (brincadeira paralela)', 'Controle esfincteriano diurno'
+  ]},
+  { faixa:'3–4 anos', min:36, max:48, marcos:[
+    'Pula em um pé', 'Conta histórias simples', 'Conhece nome completo',
+    'Brinca com outras crianças (interação)', 'Veste-se com pouca ajuda'
+  ]},
+  { faixa:'4–5 anos', min:48, max:60, marcos:[
+    'Copia círculo e cruz', 'Conta até 10', 'Nomeia letras do nome',
+    'Brinca com regras simples', 'Autonomia para higiene'
+  ]},
+  { faixa:'5–6 anos', min:60, max:72, marcos:[
+    'Lê e escreve o próprio nome', 'Raciocínio lógico básico',
+    'Socialização adequada na escola', 'Controle emocional adequado para a idade'
+  ]}
+];
+
+function pedSoapDNPM(){
+  var meses = pedIdadeMesesSoap();
+  var lista = document.getElementById('soap-dnpm-lista');
+  if(!lista) return;
+  var faixa = null;
+  for(var i=0;i<DNPM_MARCOS.length;i++){
+    if(meses >= DNPM_MARCOS[i].min && meses <= DNPM_MARCOS[i].max){ faixa=DNPM_MARCOS[i]; break; }
+  }
+  if(!faixa){ lista.innerHTML='<div style="font-size:10px;color:#94a3b8;padding:4px;">Informe a idade para ver os marcos.</div>'; return; }
+  lista.innerHTML = '<div style="font-size:9px;color:#60a5fa;margin-bottom:4px;text-transform:uppercase;letter-spacing:.08em;">Marcos esperados — '+faixa.faixa+'</div>'
+    + faixa.marcos.map(function(m){
+        var id='dnpm_'+m.replace(/[^a-z0-9]/gi,'_');
+        return '<label class="cbi" style="margin-bottom:2px;"><input type="checkbox" id="'+id+'" onchange="pedSoapPreview()"> '+m+'</label>';
+      }).join('');
+}
+
+function pedIdadeMesesSoap(){
+  var anos = parseInt(document.getElementById('soap-anos').value)||0;
+  var mes  = parseInt(document.getElementById('soap-meses').value)||0;
+  return anos*12+mes;
+}
+
+function pedSoapCalc(){
+  var peso = parseFloat(document.getElementById('soap-peso').value);
+  var alt  = parseFloat(document.getElementById('soap-altura').value);
+  var imcEl = document.getElementById('soap-imc');
+  if(peso>0 && alt>0){ var imc=peso/((alt/100)*(alt/100)); imcEl.value=Math.round(imc*10)/10+' kg/m²'; }
+  else imcEl.value='';
+  pedSoapDNPM();
+  pedSoapPreview();
+}
+
+function pedSoapPreview(){
+  // Preview no main area
+  var el=document.getElementById('ped-resultado');
+  if(!el)return;
+  el.innerHTML='<div style="padding:20px;color:#94a3b8;text-align:center;font-size:12px;">Clique em <b>Gerar SOAP</b> para visualizar.</div>';
+}
+
+function pedGerarSOAP(){
+  var familia = document.getElementById('soap-familia').value||'_____';
+  var anos    = parseInt(document.getElementById('soap-anos').value)||0;
+  var meses   = parseInt(document.getElementById('soap-meses').value)||0;
+  var peso    = document.getElementById('soap-peso').value;
+  var altura  = document.getElementById('soap-altura').value;
+  var pc      = document.getElementById('soap-pc').value;
+  var imc     = document.getElementById('soap-imc').value;
+  var alim    = document.getElementById('soap-alim');
+  var alimTxt = alim.options[alim.selectedIndex].text;
+  var telas   = document.getElementById('soap-telas').value;
+  var vac     = document.getElementById('soap-vacina');
+  var vacTxt  = vac.options[vac.selectedIndex].text;
+  var supl    = document.getElementById('soap-supl');
+  var suplTxt = supl.options[supl.selectedIndex].text;
+  var gpa     = document.getElementById('soap-gpa').value;
+  var obs     = document.getElementById('soap-obs').value;
+  var idadeStr = (anos?anos+' ano'+(anos>1?'s':''):'') + (meses?' e '+meses+' m\u00eas'+(meses>1?'es':''):'');
+  if(!idadeStr) idadeStr='____';
+
+  // DNPM
+  var totalDNPM=document.querySelectorAll('#soap-dnpm-lista input[type=checkbox]').length;
+  var presentesDNPM=[];
+  var ausentesDNPM=[];
+  document.querySelectorAll('#soap-dnpm-lista input[type=checkbox]').forEach(function(cb){
+    var txt=cb.parentElement.textContent.trim();
+    if(cb.checked) presentesDNPM.push(txt); else ausentesDNPM.push(txt);
+  });
+
+  // Monta SOAP
+  var s = '\u2014 Consulta de puericultura de rotina. Fam\u00edlia '+familia+', '+idadeStr+'.';
+  if(obs) s += ' '+obs;
+  if(gpa) s += ' Hist\u00f3rico gestacional: '+gpa+'.';
+  s += '\n\u2014 Alimenta\u00e7\u00e3o: '+alimTxt+'.';
+  s += '\n\u2014 Tempo de tela: '+(telas?telas+'h/dia':'n\u00e3o informado')+'.';
+  s += '\n\u2014 Suplementa\u00e7\u00e3o em uso: '+suplTxt+'.';
+  s += '\n\u2014 Vacina\u00e7\u00e3o: '+vacTxt.toLowerCase()+'.';
+
+  var peso_str = peso?peso+' kg':'____';
+  var alt_str  = altura?altura+' cm':'____';
+  var pc_str   = pc?pc+' cm':'____';
+  var imc_str  = imc||'____';
+  var o = 'BEG, LOC, AAA. Peso: '+peso_str+' | Altura: '+alt_str+' | PC: '+pc_str+' | IMC: '+imc_str
+    +'\nRCR 2T SS.\nMVU sem ru\u00eddos advent\u00edcios.\nAbdome sem altera\u00e7\u00f5es relevantes ao exame.\nPele sem les\u00f5es aparentes.\nExtremidades sem deformidades aparentes.\nNeuro sem d\u00e9ficits focais.';
+
+  var a_items = ['Puericultura de rotina.'];
+  var dnpmStatus = '';
+  if(totalDNPM>0){
+    if(ausentesDNPM.length===0) dnpmStatus='DNPM adequado para a idade.';
+    else dnpmStatus='DNPM com sinais de aten\u00e7\u00e3o: aus\u00eancia de — '+ausentesDNPM.join(', ')+'.';
+    a_items.push(dnpmStatus);
+  }
+  var telasN = parseFloat(telas)||0;
+  if(telasN>2) a_items.push('Uso excessivo de telas ('+telas+'h/dia; recomendado: at\u00e9 2h/dia para >2 anos).');
+  var alimSel = document.getElementById('soap-alim').value;
+  if(alimSel==='irregular') a_items.push('Padr\u00e3o alimentar inadequado, rico em ultraprocessados.');
+  if(alimSel==='seletiva')  a_items.push('Seletividade alimentar.');
+  if(vacTxt.toLowerCase().indexOf('pendente')>=0) a_items.push('Vacina\u00e7\u00e3o incompleta — orientar atualiza\u00e7\u00e3o.');
+
+  var a = a_items.map(function(x){return '\u2014 '+x;}).join('\n');
+
+  var p_items = [
+    'Oriento sobre o quadro cl\u00ednico da crian\u00e7a e realizo orienta\u00e7\u00f5es antecipatrias de puericultura.',
+    'Oriento manuten\u00e7\u00e3o do acompanhamento longitudinal na unidade.',
+    'Mantenho seguimento em puericultura.'
+  ];
+  if(alimSel!=='variada') p_items.push('Oriento h\u00e1bitos alimentares saud\u00e1veis, redu\u00e7\u00e3o de ultraprocessados e diversifica\u00e7\u00e3o alimentar.');
+  if(telasN>2) p_items.push('Oriento redu\u00e7\u00e3o do tempo de tela para no m\u00e1ximo 2 horas por dia.');
+  if(ausentesDNPM.length>0) p_items.push('Oriento estimula\u00e7\u00e3o precoce conforme marcos esperados para a faixa et\u00e1ria. Reavaliação em 30-60 dias.');
+  if(vacTxt.toLowerCase().indexOf('pendente')>=0) p_items.push('Oriento atualiza\u00e7\u00e3o da caderneta vacinal na unidade.');
+  p_items.push('Recomendo retorno conforme necessidade cl\u00ednica.');
+
+  var p = p_items.map(function(x){return '\u2014 '+x;}).join('\n');
+
+  var soap = '#S\n'+s+'\n\n#O\n'+o+'\n\n#A\n'+a+'\n\n#P\n'+p;
+
+  // Exibe no main area como editor
+  var el=document.getElementById('ped-resultado');
+  if(!el)return;
+  el.innerHTML=
+    '<div style="padding:18px 22px;">'
+    +'<div style="font-size:11px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #1a3a5c;padding-bottom:7px;margin-bottom:14px;">SOAP Puericultura \u2014 '+familia+' \u00b7 '+idadeStr+'</div>'
+    +'<div style="font-size:10px;color:#64748b;margin-bottom:6px;">Texto gerado automaticamente \u2014 edite livremente antes de copiar ou imprimir.</div>'
+    +'<textarea id="soap-result-txt" style="width:100%;min-height:400px;font-size:12px;font-family:inherit;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;line-height:1.75;color:#1e293b;resize:vertical;" spellcheck="false">'+soap+'</textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;">'
+    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'soap-result-txt\').value)" style="flex:1;padding:9px;background:#1a3a5c;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;">&#128203; Copiar SOAP</button>'
+    +'<button onclick="pedSoapImprimir()" style="flex:1;padding:9px;background:#1e40af;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;">&#128438; Imprimir</button>'
+    +'</div></div>';
+}
+
+function pedSoapImprimir(){
+  var txt = document.getElementById('soap-result-txt');
+  if(!txt){ alert('Gere o SOAP primeiro.'); return; }
+  var conteudo = pCab()+pPac()+'<div class="p-titulo">SOAP \u2014 Puericultura</div>'
+    +'<div class="p-corpo">'+txt.value+'</div>';
+  var fh = folha(conteudo, false);
+  var CSS = buildCSS1Via();
+  abrirJanelaImp(CSS, fh, 'SOAP Puericultura');
+}
+
+// ================================================================
+// MÓDULO PEDIATRIA — Encaminhamentos
+// ================================================================
+var ENC_TEXTOS = {
+  fono:      'Fonoaudiologia',
+  psico:     'Psicoterapia',
+  ceiditea:  'CEIDITEA \u2014 Centro Especializado em Autismo',
+  pediatria: 'Pediatria Especializada',
+  neuroped:  'Neuropediatria',
+  oftalmologia: 'Oftalmologia',
+  ortopedia: 'Ortopedia Pedi\u00e1trica',
+  outro:     ''
+};
+
+function pedEncPreview(){
+  var tipo = document.getElementById('enc-tipo').value;
+  var outraRow = document.getElementById('enc-outro-row');
+  if(outraRow) outraRow.style.display = tipo==='outro' ? 'block':'none';
+
+  var el = document.getElementById('ped-resultado');
+  if(!el||!tipo) return;
+
+  var espec = tipo==='outro' ? (document.getElementById('enc-outro').value||'Especialista') : ENC_TEXTOS[tipo];
+  var motivo = document.getElementById('enc-motivo').value||'conforme avaliação clínica';
+  var prio = document.getElementById('enc-prioridade');
+  var prioTxt = prio.options[prio.selectedIndex].text;
+  var nome = document.getElementById('pac').value||'___';
+  var nasc = document.getElementById('nasc').value;
+
+  var texto = 'Encaminho o(a) paciente '+nome+(nasc?' (Nasc.: '+nasc+')':'')+' para avalia\u00e7\u00e3o por <b>'+espec+'</b>.\n\nMotivo / Hip\u00f3tese diagn\u00f3stica:\n'+motivo+'\n\nPrioridade: '+prioTxt+'.';
+
+  el.innerHTML =
+    '<div style="padding:18px 22px;">'
+    +'<div style="font-size:11px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.08em;border-bottom:2px solid #1a3a5c;padding-bottom:7px;margin-bottom:14px;">Encaminhamento \u2014 '+espec+'</div>'
+    +'<textarea id="enc-result-txt" style="width:100%;min-height:200px;font-size:12px;font-family:inherit;border:1.5px solid #e2e8f0;border-radius:8px;padding:12px;line-height:1.75;color:#1e293b;resize:vertical;">'+texto.replace(/<b>|<\/b>/g,'')+'</textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:12px;">'
+    +'<button onclick="navigator.clipboard.writeText(document.getElementById(\'enc-result-txt\').value)" style="flex:1;padding:9px;background:#1a3a5c;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;">&#128203; Copiar</button>'
+    +'<button onclick="pedEncImprimir()" style="flex:1;padding:9px;background:#1e40af;color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;">&#128438; Imprimir</button>'
+    +'</div></div>';
+}
+
+function pedEncImprimir(){
+  var txt = document.getElementById('enc-result-txt');
+  if(!txt){ alert('Gere o encaminhamento primeiro.'); return; }
+  var conteudo = pCab()+pPac()+'<div class="p-titulo">Encaminhamento</div>'
+    +'<div class="p-corpo">'+txt.value+'</div>';
+  var fh = folha(conteudo, false);
+  abrirJanelaImp(buildCSS1Via(), fh, 'Encaminhamento');
+}
+
+// ================================================================
+// HELPERS de impressão centralizados
+// ================================================================
+function buildCSS1Via(){
+  return '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}'
+    +'html,body{background:#fff;font-family:"Segoe UI",Arial,sans-serif;}'
+    +'@page{size:A4 portrait;margin:0;}'
+    +'#paginas{display:block;}'
+    +'.folha-print{width:210mm;height:297mm;display:flex;flex-direction:column;padding:13mm 18mm 0 18mm;background:#fff;overflow:hidden;}'
+    +'.folha-conteudo{flex:1;overflow:hidden;}.folha-rodape{flex-shrink:0;}'
+    +'.cx-on{display:inline-block;width:11px;height:11px;border:1.5px solid #1a3a5c;background:#1a3a5c;border-radius:2px;flex-shrink:0;margin-top:1px;}'
+    +'.cx-off{display:inline-block;width:11px;height:11px;border:1.5px solid #bbb;background:#fff;border-radius:2px;flex-shrink:0;margin-top:1px;}'
+    +'.p-dh{display:flex;align-items:center;gap:11px;padding-bottom:9px;margin-bottom:8px;border-bottom:2.5px solid #1a3a5c;}'
+    +'.p-logo{width:56px;height:56px;flex-shrink:0;object-fit:contain;}'
+    +'.p-dn{font-size:10px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.04em;}'
+    +'.p-ds{font-size:8px;color:#64748b;margin-top:2px;line-height:1.5;}'
+    +'.p-cab-data{font-size:8.5px;color:#64748b;font-weight:600;align-self:flex-end;}'
+    +'.p-pac-row{display:flex;align-items:baseline;gap:7px;border-bottom:1.5px solid #1a3a5c;padding:4px 0 6px;margin-bottom:10px;flex-wrap:wrap;}'
+    +'.p-pac-lbl{font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;}'
+    +'.p-pac-nome{font-size:15px;font-weight:700;color:#0f172a;flex:1;}'
+    +'.p-pac-meta{font-size:9px;color:#64748b;white-space:nowrap;}'
+    +'.p-titulo{text-align:center;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#1a3a5c,#1e5080);color:#fff;padding:9px 14px;font-size:12px;margin-bottom:12px;border-radius:5px;letter-spacing:.08em;}'
+    +'.p-grid2{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;margin-bottom:10px;}'
+    +'.p-grid2-col{border-right:1px solid #e2e8f0;}.p-grid2-col:last-child{border-right:none;}'
+    +'.p-ex-row{display:flex;align-items:flex-start;gap:7px;padding:5px 8px;border-bottom:.5px solid #f1f5f9;font-size:9.5px;line-height:1.4;color:#1e293b;}'
+    +'.p-ex-row:last-child{border-bottom:none;}'
+    +'.p-indicbox{border:1.5px solid #3b82f6;border-radius:4px;margin-bottom:12px;}'
+    +'.p-indicboxhd{background:#3b82f6;color:#fff;font-size:7px;font-weight:700;padding:2.5px 8px;text-transform:uppercase;letter-spacing:.1em;}'
+    +'.p-indicbody{padding:6px 9px;font-size:10.5px;line-height:1.7;color:#1e293b;}'
+    +'.p-corpo{line-height:1.85;white-space:pre-wrap;font-size:13px;font-family:"Times New Roman",serif;text-align:justify;margin-bottom:12px;}'
+    +'.p-cat-hd{font-size:8px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1a3a5c,#1e5080);border-radius:4px;padding:3px 9px;letter-spacing:.07em;text-transform:uppercase;margin:8px 0 3px;break-inside:avoid;break-after:avoid;}'
+    +'.assin-wrap{border-top:1px solid #e2e8f0;padding-top:10px;margin-top:12px;display:flex;justify-content:space-between;align-items:flex-end;}'
+    +'.assin-esq{font-size:8.5px;color:#94a3b8;line-height:1.6;}'
+    +'.assin-dir{text-align:center;min-width:200px;}'
+    +'.assin-linha{border-top:1.5px solid #334155;padding-top:4px;font-size:10.5px;font-weight:700;color:#1e293b;}'
+    +'.assin-crm{font-size:9px;color:#64748b;margin-top:2px;}'
+    +'.faixa-azul{background:#1a3a5c;color:#fff;text-align:center;font-size:7.5px;letter-spacing:.07em;padding:7px 0;margin-top:10px;margin-left:-18mm;margin-right:-18mm;}';
+}
+
+function abrirJanelaImp(CSS, folhaHTML, titulo){
+  var w = window.open('','_blank','width=900,height=750');
+  w.document.write(
+    '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>'+titulo+'</title>'
+    +'<style>'+CSS+'</style></head><body>'
+    +'<div id="paginas">'+folhaHTML+'</div>'
+    +'<scr'+'ipt>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<'+'/script>'
+    +'</body></html>'
+  );
+  w.document.close();
 }
 function carregarModelo(){var m=g('modelo');var ep=document.getElementById('fp'),ed=document.getElementById('fd');if(ep)ep.style.display=m==='atst'?'block':'none';if(ed)ed.style.display=m==='atsaf'?'block':'none';if(m!==modeloAtual){modeloAtual=m;var pad=PADRAO[m]||{t:'',c:''};var tEl=document.getElementById('doc-titulo'),cEl=document.getElementById('doc-corpo');if(tEl)tEl.value=pad.t;var corpo=pad.c;if(m==='atst')corpo='Atesto que o(a) paciente esteve presente nesta UBS na data de hoje, '+DT+', no per\u00edodo '+(g('periodo')||'matutino')+', para atendimento e consulta m\u00e9dica.';if(m==='atsaf')corpo='Atesto que o(a) paciente necessita de afastamento de suas atividades laborais pelo per\u00edodo de '+(g('dias')||'___ dias')+'.\n\nCID-10: ';if(cEl)cEl.value=corpo;}R();}
 function filtrar(){var q=g('busca').toLowerCase();document.querySelectorAll('.cbi[data-nome]').forEach(function(el){el.style.display=(!q||el.getAttribute('data-nome').toLowerCase().indexOf(q)>=0)?'flex':'none';});document.querySelectorAll('.seclab[data-cat]').forEach(function(el){var cat=el.getAttribute('data-cat');var vis=document.querySelectorAll('.cbi[data-cat="'+cat+'"]:not([style*="none"])').length;el.style.display=(!q||vis>0)?'block':'none';});}
@@ -2811,23 +3689,22 @@ function cbRenderResultado(){
 }
 
 function cbImprimirExames(){
-  // Coleta exames marcados nos checkboxes do resultado
+  // ── Coleta exames marcados nos checkboxes renderizados ────────────
   var examesMarcados = [];
-  // Primeiro tenta pegar dos checkboxes renderizados em comorb-resultado
   var cboxes = document.querySelectorAll('#comorb-resultado input[type=checkbox]:checked');
   if(cboxes.length){
-    cboxes.forEach(function(cb){ examesMarcados.push(cb.parentElement.textContent.trim()); });
+    cboxes.forEach(function(cb){
+      var span = cb.parentElement.querySelector('span');
+      var txt  = span ? span.textContent.trim() : cb.parentElement.textContent.trim();
+      if(txt) examesMarcados.push(txt);
+    });
   } else {
-    // Fallback: CB_ESTADO
     Object.keys(CB_ESTADO).forEach(function(e){ if(CB_ESTADO[e]) examesMarcados.push(e); });
   }
 
   if(!examesMarcados.length){ alert('Nenhum exame selecionado para imprimir.'); return; }
 
-  var idade = cbGetIdade();
-  var sexo  = cbGetSexo();
-
-  // Agrupa por categoria
+  // ── Agrupa por categoria ──────────────────────────────────────────
   var grupos = {};
   examesMarcados.forEach(function(e){
     var cat = cbCategoria(e);
@@ -2835,56 +3712,64 @@ function cbImprimirExames(){
     grupos[cat].push(e);
   });
 
-  var ordemCat = ['Lab. Geral','Bioquímica','Ferro / Vitaminas','Glicemia / DM','Lipídios',
+  var ORDEM_CAT = [
+    'Lab. Geral','Bioquímica','Ferro / Vitaminas','Glicemia / DM','Lipídios',
     'Enzimas hepáticas','Rins / Urina','Fezes / Parasitas','Tireoide','Cardiologia',
-    'Sorologias','Grupo sanguíneo','Imagem','Rastreio oncológico','Função pulmonar','Outros'];
+    'Sorologias','Grupo sanguíneo','Imagem','Rastreio oncológico','Função pulmonar','Outros'
+  ];
 
-  // Constrói o conteúdo interno usando as mesmas classes .p-* já definidas em IMP()
-  var idadeStr = sexo ? ((sexo==='M'?'Masculino':'Feminino')+(idade?' &middot; '+idade+' anos':'')) : '';
-
+  // ── Constrói conteúdo usando os mesmos helpers de IMP() ───────────
   var conteudo = pCab() + pPac();
 
-  // Comorbidades ativas como subtítulo
+  // Tags de comorbidades/perfis selecionados
   var sel = cbGetSelecionadas();
   if(sel.length){
-    conteudo += '<div style="background:#f0f9ff;border:1px solid #bfdbfe;border-radius:5px;padding:6px 12px;margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px;">';
+    conteudo += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
     sel.forEach(function(k){
       var lbl = (COMORB_REGRAS[k] && COMORB_REGRAS[k].label) || k;
-      conteudo += '<span style="background:#1a3a5c;color:#fff;font-size:8px;font-weight:600;border-radius:20px;padding:2px 8px;">'+lbl+'</span>';
+      conteudo += '<span style="background:#1a3a5c;color:#fff;font-size:7.5px;font-weight:600;'
+               +  'border-radius:20px;padding:2px 8px;white-space:nowrap;">'+lbl+'</span>';
     });
     conteudo += '</div>';
   }
 
   conteudo += '<div class="p-titulo">Solicita\u00e7\u00e3o de Exames</div>';
 
-  // Exames agrupados por categoria — grid 2 colunas usando classes p-grid2
-  ordemCat.forEach(function(cat){
+  // Exames por categoria — mesma lógica 2 colunas de IMP()
+  function mkGrid2(c1html, c2html){
+    return '<div class="p-grid2"><div class="p-grid2-col">'+c1html+'</div>'
+          +'<div class="p-grid2-col">'+c2html+'</div></div>';
+  }
+
+  ORDEM_CAT.forEach(function(cat){
     if(!grupos[cat] || !grupos[cat].length) return;
     var items = grupos[cat];
     var c1 = [], c2 = [];
     items.forEach(function(e,i){ if(i%2===0) c1.push(e); else c2.push(e); });
 
+    // Cabeçalho de categoria
     conteudo += '<div class="p-cat-hd">'+cat+'</div>';
-    conteudo += '<div class="p-grid2">';
-    conteudo += '<div class="p-grid2-col">';
-    c1.forEach(function(e){
-      conteudo += '<div class="p-ex-row"><span class="cx-on"></span>'+e+'</div>';
-    });
-    conteudo += '</div><div class="p-grid2-col">';
-    c2.forEach(function(e){
-      conteudo += '<div class="p-ex-row"><span class="cx-on"></span>'+e+'</div>';
-    });
-    conteudo += '</div></div>';
+    // Grid 2 colunas com exRow igual ao IMP()
+    conteudo += mkGrid2(
+      c1.map(function(e){ return exRow(true,e); }).join(''),
+      c2.map(function(e){ return exRow(true,e); }).join('')
+    );
   });
 
-  // Usa a mesma função folha() que todas as outras abas
+  // ── Monta folha com a mesma função folha() de todos os outros módulos
   var folhaHTML = folha(conteudo, false); // retrato, 1 via
 
-  // CSS extra: classe .p-cat-hd não definida em IMP() 1-via, adicionar aqui
-  var cssExtra = '.p-cat-hd{font-size:8.5px;font-weight:700;color:#fff;background:linear-gradient(90deg,#1a3a5c,#1e5080);border-radius:4px;padding:3px 9px;letter-spacing:.07em;text-transform:uppercase;margin:8px 0 3px;}';
+  // ── CSS: idêntico ao CSS de IMP() vias=1, só com .p-cat-hd extra ─
+  var CSS_CAT_HD =
+    '.p-cat-hd{font-size:8px;font-weight:700;color:#fff;'
+    +'background:linear-gradient(90deg,#1a3a5c,#1e5080);'
+    +'border-radius:4px;padding:3px 9px;letter-spacing:.07em;'
+    +'text-transform:uppercase;margin:8px 0 3px;'
+    +'break-inside:avoid;page-break-inside:avoid;'
+    +'break-after:avoid;page-break-after:avoid;}';
 
-  // CSS completo da impressão 1-via (idêntico ao IMP() com vias=1)
-  var CSS =
+  // CSS_BASE replica exata do bloco 1-via em IMP()
+  var CSS_1VIA =
     '*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}'+
     'html,body{background:#fff;font-family:"Segoe UI",Arial,sans-serif;}'+
     '@page{size:A4 portrait;margin:0;}'+
@@ -2892,6 +3777,8 @@ function cbImprimirExames(){
     '.folha-print{width:210mm;height:297mm;display:flex;flex-direction:column;padding:13mm 18mm 0 18mm;background:#fff;overflow:hidden;}'+
     '.folha-conteudo{flex:1;overflow:hidden;}'+
     '.folha-rodape{flex-shrink:0;}'+
+    '.cx-on{display:inline-block;width:11px;height:11px;border:1.5px solid #1a3a5c;background:#1a3a5c;border-radius:2px;flex-shrink:0;margin-top:1px;}'+
+    '.cx-off{display:inline-block;width:11px;height:11px;border:1.5px solid #bbb;background:#fff;border-radius:2px;flex-shrink:0;margin-top:1px;}'+
     '.p-dh{display:flex;align-items:center;gap:11px;padding-bottom:9px;margin-bottom:8px;border-bottom:2.5px solid #1a3a5c;}'+
     '.p-logo{width:56px;height:56px;flex-shrink:0;object-fit:contain;}'+
     '.p-dn{font-size:10px;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:.04em;}'+
@@ -2901,25 +3788,26 @@ function cbImprimirExames(){
     '.p-pac-lbl{font-size:8px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.08em;flex-shrink:0;}'+
     '.p-pac-nome{font-size:15px;font-weight:700;color:#0f172a;flex:1;min-width:120px;}'+
     '.p-pac-meta{font-size:9px;color:#64748b;white-space:nowrap;flex-shrink:0;}'+
-    '.p-titulo{text-align:center;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#1a3a5c,#1e5080);color:#fff;padding:9px 14px;font-size:12px;margin-bottom:12px;border-radius:5px;letter-spacing:.08em;}'+
-    '.p-grid2{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;margin-bottom:10px;}'+
+    '.p-titulo{text-align:center;font-weight:800;text-transform:uppercase;background:linear-gradient(90deg,#1a3a5c,#1e5080);color:#fff;padding:9px 14px;font-size:12px;margin-bottom:12px;border-radius:5px;letter-spacing:.08em;break-inside:avoid;page-break-inside:avoid;}'+
+    '.p-grid2{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e2e8f0;border-radius:5px;overflow:hidden;margin-bottom:10px;break-inside:avoid;page-break-inside:avoid;}'+
     '.p-grid2-col{border-right:1px solid #e2e8f0;}.p-grid2-col:last-child{border-right:none;}'+
-    '.p-ex-row{display:flex;align-items:flex-start;gap:7px;padding:5px 8px;border-bottom:.5px solid #f1f5f9;font-size:9.5px;line-height:1.35;color:#1e293b;}'+
+    '.p-ex-row{display:flex;align-items:flex-start;gap:7px;padding:5px 8px;border-bottom:.5px solid #f1f5f9;font-size:9.5px;line-height:1.4;color:#1e293b;}'+
     '.p-ex-row:last-child{border-bottom:none;}'+
-    '.cx-on{display:inline-block;width:11px;height:11px;border:1.5px solid #1a3a5c;background:#1a3a5c;border-radius:2px;flex-shrink:0;margin-top:1px;}'+
-    '.cx-off{display:inline-block;width:11px;height:11px;border:1.5px solid #bbb;background:#fff;border-radius:2px;flex-shrink:0;margin-top:1px;}'+
-    '.assin-wrap{border-top:1px solid #e2e8f0;padding-top:12px;margin-top:14px;display:flex;justify-content:space-between;align-items:flex-end;}'+
-    '.assin-esq{font-size:9px;color:#94a3b8;line-height:1.6;}'+
-    '.assin-dir{text-align:center;min-width:210px;}'+
-    '.assin-linha{border-top:1.5px solid #334155;padding-top:4px;font-size:11px;font-weight:700;color:#1e293b;}'+
-    '.assin-crm{font-size:9.5px;color:#64748b;margin-top:2px;}'+
+    '.p-indicbox{border:1.5px solid #3b82f6;border-radius:4px;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid;}'+
+    '.p-indicboxhd{background:#3b82f6;color:#fff;font-size:7px;font-weight:700;padding:2.5px 8px;text-transform:uppercase;letter-spacing:.1em;}'+
+    '.p-indicbody{padding:6px 9px;font-size:10.5px;line-height:1.7;color:#1e293b;}'+
+    '.assin-wrap{border-top:1px solid #e2e8f0;padding-top:10px;margin-top:12px;display:flex;justify-content:space-between;align-items:flex-end;}'+
+    '.assin-esq{font-size:8.5px;color:#94a3b8;line-height:1.6;}'+
+    '.assin-dir{text-align:center;min-width:200px;}'+
+    '.assin-linha{border-top:1.5px solid #334155;padding-top:4px;font-size:10.5px;font-weight:700;color:#1e293b;}'+
+    '.assin-crm{font-size:9px;color:#64748b;margin-top:2px;}'+
     '.faixa-azul{background:#1a3a5c;color:#fff;text-align:center;font-size:7.5px;letter-spacing:.07em;padding:7px 0;margin-top:10px;margin-left:-18mm;margin-right:-18mm;}'+
-    cssExtra;
+    CSS_CAT_HD;
 
   var w = window.open('','_blank','width=900,height=750');
   w.document.write(
-    '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Exames</title>'+
-    '<style>'+CSS+'</style></head><body>'+
+    '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Rastreio &mdash; Exames</title>'+
+    '<style>'+CSS_1VIA+'</style></head><body>'+
     '<div id="paginas">'+folhaHTML+'</div>'+
     '<scr'+'ipt>window.onload=function(){window.print();window.onafterprint=function(){window.close();};};<'+'/script>'+
     '</body></html>'
